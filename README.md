@@ -1,5 +1,5 @@
 
-# Garage Management System
+# ParkFlow - Garage Management System
 
 Backend is running on http://localhost:3000
 
