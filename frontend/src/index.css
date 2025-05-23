@@ -12,7 +12,6 @@
   src: local("Ubuntu-Regular"), url("./assets/fonts/Ubuntu-Regular.ttf") format('truetype');
 }
 
-/* Базовые стили */
 * {
   box-sizing: border-box;
 }
@@ -31,12 +30,10 @@ code {
   monospace;
 }
 
-/* Убираем стандартные стили для input */
 input:focus {
   outline: none;
 }
 
-/* Кастомные классы для скроллбара */
 ::-webkit-scrollbar {
   width: 8px;
 }

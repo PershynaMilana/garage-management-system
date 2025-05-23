@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { loginUser, clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
+import Footer from "../../components/Footer.tsx";
 
 interface LoginPageProps {}
 
@@ -36,26 +37,25 @@ const LoginPage: React.FC<LoginPageProps> = () => {
 
     return (
         <PageLayout>
-            <div className="min-h-screen relative overflow-hidden">
+            <div className=" relative overflow-hidden">
 
                 {/* Main Content */}
-                <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+                <div className="xl:mt-[10vh] sm:mt-[10vh] relative z-10 flex items-center justify-center  p-4">
                     <div className="w-full max-w-md">
-                        {/* Page Title */}
-                        <div className="absolute top-8 left-8">
-                            <h1 className="text-[#FFFFFF] font-[Ubuntu-Regular] text-[18pt] sm:text-[15pt]">Log In</h1>
+
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <div className="w-full h-0.5 bg-[#87d7de] mx-auto mb-4"></div>
+                            <h2 className="text-[24pt] sm:text-[36pt] font-[IBMPlexMono-Regular] text-[#FFFFFF] mb-4">
+                                Welcome Back
+                            </h2>
+                            <h2 className="text-[#FFFFFF] font-[IBMPlexMono-Regular] text-[24pt]">Log in</h2>
+                            <div className="w-full h-0.5 bg-[#87d7de] mx-auto my-4"></div>
                         </div>
 
                         {/* Login Card */}
-                        <div className="bg-[#33455e] backdrop-blur-sm rounded-lg p-8 shadow-2xl border border-[#4e6b8c]/30">
-                            {/* Header */}
-                            <div className="text-center mb-8">
-                                <h2 className="text-[24pt] sm:text-[36pt] font-[Ubuntu-Regular] text-[#FFFFFF] mb-4">
-                                    Welcome Back
-                                </h2>
-                                <div className="w-full h-0.5 bg-[#87d7de] mx-auto mb-4"></div>
-                                <p className="text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] sm:text-[15pt]">Log in</p>
-                            </div>
+                        <div className=" backdrop-blur-sm rounded-lg p-8 shadow-2xl border border-[#696969]/30">
+
 
                             {/* Error */}
                             {error && (
@@ -117,45 +117,15 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                 </button>
                             </form>
 
-                            {/* Footer Links */}
-                            <div className="flex justify-between items-center mt-8 text-[10pt]">
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-[#FFFFFF]/70 hover:text-[#87d7de] transition-colors duration-200 underline font-[Ubuntu-Regular]"
-                                >
-                                    Forgot password?
-                                </Link>
-                                <Link
-                                    to="/signup"
-                                    className="text-[#FFFFFF]/70 hover:text-[#87d7de] transition-colors duration-200 underline font-[Ubuntu-Regular]"
-                                >
-                                    Sign Up
-                                </Link>
-                            </div>
 
-                            {/* Test credentials hint */}
-                            <div className="mt-6 p-3 bg-[#87d7de]/10 border border-[#87d7de]/30 rounded text-[8pt]">
-                                <p className="text-[#87d7de] font-[Ubuntu-Regular]">
-                                    Test: test@example.com / password
-                                </p>
-                            </div>
                         </div>
 
-                        {/* Copyright */}
-                        <div className="flex justify-between items-center mt-8 text-[8pt]">
-                            <span className="text-[#FFFFFF]/50 font-[Ubuntu-Regular]">©2025 LOGO. All rights reserved</span>
-                            <div className="flex space-x-2">
-                                <div className="w-6 h-4 bg-[#B63232] rounded-sm flex items-center justify-center">
-                                    <span className="text-[#FFFFFF] text-xs">🇬🇧</span>
-                                </div>
-                                <div className="w-6 h-4 bg-[#87d7de] rounded-sm flex items-center justify-center">
-                                    <span className="text-[#FFFFFF] text-xs">🇺🇦</span>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
+
                 </div>
             </div>
+            <Footer />
         </PageLayout>
     );
 };
