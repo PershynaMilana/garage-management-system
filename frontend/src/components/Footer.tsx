@@ -117,7 +117,7 @@ const Footer: React.FC = () => {
                             </div>
                         </div>
                         {/* Info section */}
-                        <div className="mt-4 ml-24 xl:mr-0 md:mt-0 md:mr-22 xl:ml-14 md:ml-4 ">
+                        <div className="mt-4 ml-24 xl:mr-0 md:mt-0 md:mr-6 xl:ml-14 md:ml-4 ">
                             <h3 className="font-bold mb-2 text-[#FFFFFF] font-[IBMPlexMono-Regular] text-base">information</h3>
                             <ul>
                                 <li><a href="/terms-of-use" className="hover:underline text-[#c3ebee] font-[IBMPlexMono-Regular] text-base">terms of use</a></li>
@@ -128,7 +128,7 @@ const Footer: React.FC = () => {
                         {/* Contact section */}
                         <div className="mt-4 md:mt-0 text-left  xl:mr-24 md:mr-0 md:ml-12 xl:ml-20">
                             <h3 className="font-bold mb-2 text-[#FFFFFF] font-[IBMPlexMono-Regular] text-base">connection</h3>
-                            <a href="tel:+380123456789" className="hover:underline text-[#c3ebee] font-[IBMPlexMono-Regular] text-base">+38(012)-345-67-89</a>
+                            <a href="tel:+380123456789" className="hover:underline text-[#c3ebee] font-[IBMPlexMono-Regular] text-base">+38(012)-345-67-89</a><br/>
                             <a href="mailto:parkflow.support@email.com" className="hover:underline text-[#c3ebee] font-[IBMPlexMono-Regular] text-base">
                                 parkflow.support@email.com
                             </a>
