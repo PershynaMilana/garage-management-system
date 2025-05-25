@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useActionState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
@@ -8,17 +8,21 @@ import Footer from "../../components/Footer.tsx";
 
 interface LoginPageProps {}
 
-interface ValidationErrors {
-    email?: string;
-    password?: string;
+interface LoginFormState {
+    errors: {
+        email?: string;
+        password?: string;
+        general?: string;
+    };
+    success: boolean;
 }
 
-const LoginPage: React.FC<LoginPageProps> = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-    const [touched, setTouched] = useState({ email: false, password: false });
+const initialState: LoginFormState = {
+    errors: {},
+    success: false
+};
 
+const LoginPage: React.FC<LoginPageProps> = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { isLoading, error, isAuthenticated } = useAuth();
@@ -56,61 +60,57 @@ const LoginPage: React.FC<LoginPageProps> = () => {
         return undefined;
     };
 
-    useEffect(() => {
-        const errors: ValidationErrors = {};
-
-        if (touched.email) {
-            const emailError = validateEmail(email);
-            if (emailError) errors.email = emailError;
-        }
-
-        if (touched.password) {
-            const passwordError = validatePassword(password);
-            if (passwordError) errors.password = passwordError;
-        }
-
-        setValidationErrors(errors);
-    }, [email, password, touched]);
-
-    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEmail(e.target.value);
-        if (!touched.email) {
-            setTouched(prev => ({ ...prev, email: true }));
-        }
-    };
-
-    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPassword(e.target.value);
-        if (!touched.password) {
-            setTouched(prev => ({ ...prev, password: true }));
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        setTouched({ email: true, password: true });
+    async function loginAction(_prevState: LoginFormState, formData: FormData): Promise<LoginFormState> {
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
 
         const emailError = validateEmail(email);
         const passwordError = validatePassword(password);
 
         if (emailError || passwordError) {
-            setValidationErrors({
-                email: emailError,
-                password: passwordError
-            });
-            return;
+            return {
+                errors: {
+                    email: emailError,
+                    password: passwordError
+                },
+                success: false
+            };
         }
 
-        dispatch(loginUser({ email, password }));
-    };
+        try {
+            const result = await dispatch(loginUser({ email, password }));
+
+            if (loginUser.fulfilled.match(result)) {
+                return {
+                    errors: {},
+                    success: true
+                };
+            } else {
+                return {
+                    errors: {
+                        general: 'Login failed. Please check your credentials.'
+                    },
+                    success: false
+                };
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (err) {
+            return {
+                errors: {
+                    general: 'An unexpected error occurred. Please try again.'
+                },
+                success: false
+            };
+        }
+    }
+
+    const [state, formAction, isPending] = useActionState(loginAction, initialState);
 
     return (
         <PageLayout>
-            <div className=" relative overflow-hidden">
-
+            <div className="relative overflow-hidden">
                 {/* Main Content */}
-                <div className="xl:mt-[10vh] sm:mt-[10vh] relative z-10 flex items-center justify-center  p-4">
+                <div className="xl:mt-[10vh] sm:mt-[10vh] relative z-10 flex items-center justify-center p-4">
                     <div className="w-full max-w-md">
 
                         {/* Header */}
@@ -124,40 +124,50 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                         </div>
 
                         {/* Login Card */}
-                        <div className=" backdrop-blur-sm rounded-lg p-8 shadow-2xl border border-[#696969]/30">
+                        <div className="backdrop-blur-sm rounded-lg p-8 shadow-2xl border border-[#696969]/30">
 
                             {/* Global Error */}
-                            {error && (
+                            {(error || state.errors.general) && (
                                 <div className="mb-6 p-4 bg-[#B63232]/20 border border-[#B63232]/50 rounded-lg">
-                                    <p className="text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">{error}</p>
+                                    <p className="text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
+                                        {error || state.errors.general}
+                                    </p>
                                 </div>
                             )}
 
-                            {/* Form */}
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Success message */}
+                            {state.success && (
+                                <div className="mb-6 p-4 bg-[#22C55E]/20 border border-[#22C55E]/50 rounded-lg">
+                                    <p className="text-[#22C55E] text-[10pt] font-[Ubuntu-Regular]">
+                                        Login successful! Redirecting...
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Form with React 19 action */}
+                            <form action={formAction} className="space-y-6">
                                 <div>
                                     <label htmlFor="email" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Email
                                     </label>
                                     <input
                                         id="email"
+                                        name="email"
                                         type="email"
-                                        value={email}
-                                        onChange={handleEmailChange}
-                                        onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
                                         placeholder="example@gmail.com"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
-                           text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
-                           focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                           ${validationErrors.email
+                                   text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
+                                   focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
+                                   ${state.errors.email
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
-                                        disabled={isLoading}
+                                        disabled={isPending || isLoading}
+                                        required
                                     />
-                                    {validationErrors.email && (
+                                    {state.errors.email && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {validationErrors.email}
+                                            {state.errors.email}
                                         </p>
                                     )}
                                 </div>
@@ -168,37 +178,36 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                     </label>
                                     <input
                                         id="password"
+                                        name="password"
                                         type="password"
-                                        value={password}
-                                        onChange={handlePasswordChange}
-                                        onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
                                         placeholder="12345678"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
-                           text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
-                           focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                           ${validationErrors.password
+                                   text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
+                                   focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
+                                   ${state.errors.password
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
-                                        disabled={isLoading}
+                                        disabled={isPending || isLoading}
+                                        required
                                     />
-                                    {validationErrors.password && (
+                                    {state.errors.password && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {validationErrors.password}
+                                            {state.errors.password}
                                         </p>
                                     )}
                                 </div>
 
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
+                                    disabled={isPending || isLoading}
                                     className="w-full bg-[#FFFFFF] text-[#0c0c18] py-4 px-6 rounded-lg
-                         font-[Ubuntu-Regular] text-[12pt] font-medium hover:bg-[#87d7de] hover:text-[#FFFFFF]
-                         focus:outline-none focus:ring-2 focus:ring-[#87d7de] focus:ring-offset-2
-                         focus:ring-offset-[#33455e] transition-all duration-200
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+                               font-[Ubuntu-Regular] text-[12pt] font-medium hover:bg-[#87d7de] hover:text-[#FFFFFF]
+                               focus:outline-none focus:ring-2 focus:ring-[#87d7de] focus:ring-offset-2
+                               focus:ring-offset-[#33455e] transition-all duration-200
+                               disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading ? 'Signing In...' : 'Sign In'}
+                                    {isPending || isLoading ? 'Signing In...' : 'Sign In'}
                                 </button>
                             </form>
 
@@ -217,11 +226,8 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                     Sign Up
                                 </Link>
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
             </div>
             <Footer />

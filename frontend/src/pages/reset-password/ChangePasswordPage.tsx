@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useActionState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
@@ -8,20 +8,21 @@ import Footer from "../../components/Footer.tsx";
 
 interface ChangePasswordPageProps {}
 
-interface ValidationErrors {
-    code?: string;
-    newPassword?: string;
+interface ChangePasswordFormState {
+    errors: {
+        code?: string;
+        newPassword?: string;
+        general?: string;
+    };
+    success: boolean;
 }
 
-const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
-    const [formData, setFormData] = useState({
-        code: '',
-        newPassword: ''
-    });
-    const [success, setSuccess] = useState(false);
-    const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-    const [touched, setTouched] = useState({ code: false, newPassword: false });
+const initialState: ChangePasswordFormState = {
+    errors: {},
+    success: false
+};
 
+const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { isLoading, error } = useAuth();
@@ -55,63 +56,54 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
         return undefined;
     };
 
-    useEffect(() => {
-        const errors: ValidationErrors = {};
+    async function changePasswordAction(_prevState: ChangePasswordFormState, formData: FormData): Promise<ChangePasswordFormState> {
+        const code = formData.get('code') as string;
+        const newPassword = formData.get('newPassword') as string;
 
-        if (touched.code) {
-            const codeError = validateCode(formData.code);
-            if (codeError) errors.code = codeError;
-        }
-
-        if (touched.newPassword) {
-            const passwordError = validatePassword(formData.newPassword);
-            if (passwordError) errors.newPassword = passwordError;
-        }
-
-        setValidationErrors(errors);
-    }, [formData.code, formData.newPassword, touched]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
-
-        if (!touched[name as keyof typeof touched]) {
-            setTouched(prev => ({ ...prev, [name]: true }));
-        }
-    };
-
-    const handleBlur = (field: keyof typeof touched) => {
-        setTouched(prev => ({ ...prev, [field]: true }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        setTouched({ code: true, newPassword: true });
-
-        const codeError = validateCode(formData.code);
-        const passwordError = validatePassword(formData.newPassword);
+        const codeError = validateCode(code);
+        const passwordError = validatePassword(newPassword);
 
         if (codeError || passwordError) {
-            setValidationErrors({
-                code: codeError,
-                newPassword: passwordError
-            });
-            return;
+            return {
+                errors: {
+                    code: codeError,
+                    newPassword: passwordError
+                },
+                success: false
+            };
         }
 
-        const result = await dispatch(changePassword(formData));
+        try {
+            const result = await dispatch(changePassword({ code, newPassword }));
 
-        if (changePassword.fulfilled.match(result)) {
-            setSuccess(true);
-            setTimeout(() => {
-                navigate('/login');
-            }, 3000);
+            if (changePassword.fulfilled.match(result)) {
+                setTimeout(() => {
+                    navigate('/login');
+                }, 3000);
+
+                return {
+                    errors: {},
+                    success: true
+                };
+            } else {
+                return {
+                    errors: {
+                        general: 'Failed to change password. Please check your code and try again.'
+                    },
+                    success: false
+                };
+            }
+        } catch (err) {
+            return {
+                errors: {
+                    general: 'An unexpected error occurred. Please try again.'
+                },
+                success: false
+            };
         }
-    };
+    }
+
+    const [state, formAction, isPending] = useActionState(changePasswordAction, initialState);
 
     return (
         <PageLayout>
@@ -136,14 +128,16 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
                         <div className="backdrop-blur-sm rounded-lg p-8 shadow-2xl border border-[#696969]/30">
 
                             {/* Global Error */}
-                            {error && (
+                            {(error || state.errors.general) && (
                                 <div className="mb-6 p-4 bg-[#B63232]/20 border border-[#B63232]/50 rounded-lg">
-                                    <p className="text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">{error}</p>
+                                    <p className="text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
+                                        {error || state.errors.general}
+                                    </p>
                                 </div>
                             )}
 
                             {/* Success message */}
-                            {success && (
+                            {state.success && (
                                 <div className="mb-6 p-4 bg-[#22C55E]/20 border border-[#22C55E]/50 rounded-lg">
                                     <p className="text-[#22C55E] text-[10pt] font-[Ubuntu-Regular]">
                                         Password successfully changed! Redirecting to login page...
@@ -151,8 +145,8 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
                                 </div>
                             )}
 
-                            {/* Form */}
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Form with React 19 action */}
+                            <form action={formAction} className="space-y-6">
                                 <div>
                                     <label htmlFor="code" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Verification Code
@@ -161,24 +155,22 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
                                         id="code"
                                         name="code"
                                         type="text"
-                                        value={formData.code}
-                                        onChange={handleChange}
-                                        onBlur={() => handleBlur('code')}
-                                        placeholder="******"
+                                        placeholder="693415"
                                         maxLength={6}
+                                        pattern="\d{6}"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${validationErrors.code
+                                   ${state.errors.code
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
                                         required
-                                        disabled={isLoading || success}
+                                        disabled={isPending || isLoading || state.success}
                                     />
-                                    {validationErrors.code && (
+                                    {state.errors.code && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {validationErrors.code}
+                                            {state.errors.code}
                                         </p>
                                     )}
                                 </div>
@@ -191,37 +183,34 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
                                         id="newPassword"
                                         name="newPassword"
                                         type="password"
-                                        value={formData.newPassword}
-                                        onChange={handleChange}
-                                        onBlur={() => handleBlur('newPassword')}
                                         placeholder="Enter new password"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${validationErrors.newPassword
+                                   ${state.errors.newPassword
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
                                         required
-                                        disabled={isLoading || success}
+                                        disabled={isPending || isLoading || state.success}
                                     />
-                                    {validationErrors.newPassword && (
+                                    {state.errors.newPassword && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {validationErrors.newPassword}
+                                            {state.errors.newPassword}
                                         </p>
                                     )}
                                 </div>
 
                                 <button
                                     type="submit"
-                                    disabled={isLoading || success}
+                                    disabled={isPending || isLoading || state.success}
                                     className="w-full bg-[#FFFFFF] text-[#0c0c18] py-4 px-6 rounded-lg
                                font-[Ubuntu-Regular] text-[12pt] font-medium hover:bg-[#87d7de] hover:text-[#FFFFFF]
                                focus:outline-none focus:ring-2 focus:ring-[#87d7de] focus:ring-offset-2
                                focus:ring-offset-[#33455e] transition-all duration-200
                                disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading ? 'Changing Password...' : success ? 'Success!' : 'Change Password'}
+                                    {isPending || isLoading ? 'Changing Password...' : state.success ? 'Success!' : 'Change Password'}
                                 </button>
                             </form>
                         </div>

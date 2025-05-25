@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useActionState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
@@ -8,16 +8,22 @@ import Footer from "../../components/Footer.tsx";
 
 interface ForgotPasswordPageProps {}
 
-interface ValidationErrors {
-    email?: string;
+interface ForgotPasswordFormState {
+    errors: {
+        email?: string;
+        general?: string;
+    };
+    success: boolean;
+    codeSent: boolean;
 }
 
-const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
-    const [email, setEmail] = useState('');
-    const [codeSent, setCodeSent] = useState(false);
-    const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-    const [touched, setTouched] = useState({ email: false });
+const initialState: ForgotPasswordFormState = {
+    errors: {},
+    success: false,
+    codeSent: false
+};
 
+const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
     const dispatch = useAppDispatch();
     const { isLoading, error } = useAuth();
 
@@ -38,40 +44,51 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
         return undefined;
     };
 
-    useEffect(() => {
-        const errors: ValidationErrors = {};
-
-        if (touched.email) {
-            const emailError = validateEmail(email);
-            if (emailError) errors.email = emailError;
-        }
-
-        setValidationErrors(errors);
-    }, [email, touched]);
-
-    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEmail(e.target.value);
-        if (!touched.email) {
-            setTouched(prev => ({ ...prev, email: true }));
-        }
-    };
-
-    const handleSendCode = async () => {
-        setTouched({ email: true });
+    async function sendCodeAction(_prevState: ForgotPasswordFormState, formData: FormData): Promise<ForgotPasswordFormState> {
+        const email = formData.get('email') as string;
 
         const emailError = validateEmail(email);
 
         if (emailError) {
-            setValidationErrors({ email: emailError });
-            return;
+            return {
+                errors: {
+                    email: emailError
+                },
+                success: false,
+                codeSent: false
+            };
         }
 
-        const result = await dispatch(forgotPassword({ email }));
+        try {
+            const result = await dispatch(forgotPassword({ email }));
 
-        if (forgotPassword.fulfilled.match(result)) {
-            setCodeSent(true);
+            if (forgotPassword.fulfilled.match(result)) {
+                return {
+                    errors: {},
+                    success: true,
+                    codeSent: true
+                };
+            } else {
+                return {
+                    errors: {
+                        general: 'Failed to send code. Please check your email address.'
+                    },
+                    success: false,
+                    codeSent: false
+                };
+            }
+        } catch (err) {
+            return {
+                errors: {
+                    general: 'An unexpected error occurred. Please try again.'
+                },
+                success: false,
+                codeSent: false
+            };
         }
-    };
+    }
+
+    const [state, formAction, isPending] = useActionState(sendCodeAction, initialState);
 
     return (
         <PageLayout>
@@ -96,14 +113,16 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
                         <div className="backdrop-blur-sm rounded-lg p-8 shadow-2xl border border-[#696969]/30">
 
                             {/* Global Error */}
-                            {error && (
+                            {(error || state.errors.general) && (
                                 <div className="mb-6 p-4 bg-[#B63232]/20 border border-[#B63232]/50 rounded-lg">
-                                    <p className="text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">{error}</p>
+                                    <p className="text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
+                                        {error || state.errors.general}
+                                    </p>
                                 </div>
                             )}
 
                             {/* Success message */}
-                            {codeSent && (
+                            {state.codeSent && (
                                 <div className="mb-6 p-4 bg-[#22C55E]/20 border border-[#22C55E]/50 rounded-lg">
                                     <p className="text-[#22C55E] text-[10pt] font-[Ubuntu-Regular]">
                                         Verification code has been sent to your email
@@ -111,49 +130,50 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
                                 </div>
                             )}
 
-                            {/* Form */}
-                            <div className="space-y-6">
+                            {/* Form with React 19 action */}
+                            <form action={formAction} className="space-y-6">
                                 <div>
                                     <label htmlFor="email" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Email
                                     </label>
                                     <input
                                         id="email"
+                                        name="email"
                                         type="email"
-                                        value={email}
-                                        onChange={handleEmailChange}
-                                        onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
                                         placeholder="example@gmail.com"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${validationErrors.email
+                                   ${state.errors.email
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
                                         required
-                                        disabled={isLoading || codeSent}
+                                        disabled={isPending || isLoading || state.codeSent}
                                     />
-                                    {validationErrors.email && (
+                                    {state.errors.email && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {validationErrors.email}
+                                            {state.errors.email}
                                         </p>
                                     )}
                                 </div>
 
                                 <button
-                                    onClick={handleSendCode}
-                                    disabled={isLoading || !email || codeSent || !!validationErrors.email}
+                                    type="submit"
+                                    disabled={isPending || isLoading || state.codeSent}
                                     className="w-full bg-[#FFFFFF] text-[#0c0c18] py-4 px-6 rounded-lg
                                font-[Ubuntu-Regular] text-[12pt] font-medium hover:bg-[#87d7de] hover:text-[#FFFFFF]
                                focus:outline-none focus:ring-2 focus:ring-[#87d7de] focus:ring-offset-2
                                focus:ring-offset-[#33455e] transition-all duration-200
                                disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading ? 'Sending...' : codeSent ? 'Code Sent' : 'Send Code'}
+                                    {isPending || isLoading ? 'Sending...' : state.codeSent ? 'Code Sent' : 'Send Code'}
                                 </button>
+                            </form>
 
-                                {codeSent && (
+                            {/* Enter Code Button */}
+                            {state.codeSent && (
+                                <div className="mt-6">
                                     <Link
                                         to="/change-password"
                                         className="block w-full text-center bg-[#87d7de] text-[#FFFFFF] py-4 px-6 rounded-lg
@@ -163,8 +183,8 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
                                     >
                                         Enter Code
                                     </Link>
-                                )}
-                            </div>
+                                </div>
+                            )}
 
                             {/* Footer Links */}
                             <div className="flex justify-between items-center mt-6">
