@@ -1,27 +1,37 @@
-import React, { useActionState, useEffect } from 'react';
+import React, { useActionState, useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
-import { registerUser, clearError } from '../../store/authSlice';
+import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
 import Footer from "../../components/Footer.tsx";
+import FormHeader from '../../components/FormHeader';
+import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/FormContainer';
+import { createRegisterAction, initialRegisterState } from '../../lib/authActions';
+import {
+    validateEmail,
+    validateStrongPassword,
+    validateFullName,
+    validateGarageNumber
+} from '../../utils/validation';
 
 interface RegisterPageProps {}
 
-interface RegisterFormState {
-    errors: {
-        fullName?: string;
-        email?: string;
-        password?: string;
-        garageNumber?: string;
-        general?: string;
-    };
-    success: boolean;
-}
+// Debounce hook for performance optimization
+const useDebounce = (value: string, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
 
-const initialState: RegisterFormState = {
-    errors: {},
-    success: false
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
 };
 
 const RegisterPage: React.FC<RegisterPageProps> = () => {
@@ -29,6 +39,35 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
     const navigate = useNavigate();
     const { isLoading, error, isAuthenticated } = useAuth();
 
+    const [formValues, setFormValues] = useState({
+        fullName: '',
+        email: '',
+        password: '',
+        garageNumber: ''
+    });
+
+    const [fieldState, setFieldState] = useState({
+        fullName: { touched: false, focused: false },
+        email: { touched: false, focused: false },
+        password: { touched: false, focused: false },
+        garageNumber: { touched: false, focused: false }
+    });
+
+    // validate after user stops typing
+    const debouncedFullName = useDebounce(formValues.fullName, 300);
+    const debouncedEmail = useDebounce(formValues.email, 300);
+    const debouncedPassword = useDebounce(formValues.password, 300);
+    const debouncedGarageNumber = useDebounce(formValues.garageNumber, 300);
+
+    // Validation errors
+    const [validationErrors, setValidationErrors] = useState({
+        fullName: undefined as string | undefined,
+        email: undefined as string | undefined,
+        password: undefined as string | undefined,
+        garageNumber: undefined as string | undefined
+    });
+
+    // Cleanup auth errors on unmounting
     useEffect(() => {
         return () => {
             dispatch(clearError());
@@ -37,112 +76,117 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/home');
+            navigate('/main-page');
         }
     }, [isAuthenticated, navigate]);
 
-    const validateFullName = (name: string): string | undefined => {
-        if (!name.trim()) {
-            return 'Full name is required';
-        }
-        if (name.trim().length < 2) {
-            return 'Full name must be at least 2 characters long';
-        }
-        if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
-            return 'Full name should contain only letters and spaces';
-        }
-        return undefined;
-    };
-
-    const validateEmail = (email: string): string | undefined => {
-        if (!email) {
-            return 'Email is required';
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return 'Please enter a valid email address';
-        }
-        return undefined;
-    };
-
-    const validatePassword = (password: string): string | undefined => {
-        if (!password) {
-            return 'Password is required';
-        }
-        if (password.length < 8) {
-            return 'Password must be at least 8 characters long';
-        }
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-            return 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
-        }
-        return undefined;
-    };
-
-    const validateGarageNumber = (garageNumber: string): string | undefined => {
-        if (!garageNumber.trim()) {
-            return 'Garage number is required';
-        }
-        if (!/^[A-Za-z0-9\-]+$/.test(garageNumber.trim())) {
-            return 'Garage number should contain only letters, numbers, and hyphens';
-        }
-        return undefined;
-    };
-
-    async function registerAction(_prevState: RegisterFormState, formData: FormData): Promise<RegisterFormState> {
-        const fullName = formData.get('fullName') as string;
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-        const garageNumber = formData.get('garageNumber') as string;
-
-        const nameError = validateFullName(fullName);
-        const emailError = validateEmail(email);
-        const passwordError = validatePassword(password);
-        const garageError = validateGarageNumber(garageNumber);
-
-        if (nameError || emailError || passwordError || garageError) {
-            return {
-                errors: {
-                    fullName: nameError,
-                    email: emailError,
-                    password: passwordError,
-                    garageNumber: garageError
-                },
-                success: false
-            };
-        }
-
-        try {
-            const result = await dispatch(registerUser({
-                fullName: fullName.trim(),
-                email: email.trim(),
-                password,
-                garageNumber: garageNumber.trim()
+    useEffect(() => {
+        if (fieldState.fullName.touched) {
+            setValidationErrors(prev => ({
+                ...prev,
+                fullName: validateFullName(debouncedFullName)
             }));
-
-            if (registerUser.fulfilled.match(result)) {
-                return {
-                    errors: {},
-                    success: true
-                };
-            } else {
-                return {
-                    errors: {
-                        general: 'Registration failed. This email might already be in use.'
-                    },
-                    success: false
-                };
-            }
-        } catch (err) {
-            return {
-                errors: {
-                    general: 'An unexpected error occurred. Please try again.'
-                },
-                success: false
-            };
         }
-    }
+    }, [debouncedFullName, fieldState.fullName.touched]);
 
-    const [state, formAction, isPending] = useActionState(registerAction, initialState);
+    useEffect(() => {
+        if (fieldState.email.touched) {
+            setValidationErrors(prev => ({
+                ...prev,
+                email: validateEmail(debouncedEmail)
+            }));
+        }
+    }, [debouncedEmail, fieldState.email.touched]);
+
+    useEffect(() => {
+        if (fieldState.password.touched) {
+            setValidationErrors(prev => ({
+                ...prev,
+                password: validateStrongPassword(debouncedPassword)
+            }));
+        }
+    }, [debouncedPassword, fieldState.password.touched]);
+
+    useEffect(() => {
+        if (fieldState.garageNumber.touched) {
+            setValidationErrors(prev => ({
+                ...prev,
+                garageNumber: validateGarageNumber(debouncedGarageNumber)
+            }));
+        }
+    }, [debouncedGarageNumber, fieldState.garageNumber.touched]);
+
+    // Create register action using extracted logic
+    const registerAction = createRegisterAction(dispatch);
+    const [state, formAction, isPending] = useActionState(registerAction, initialRegisterState);
+
+    // Optimized field change handler
+    const handleFieldChange = useCallback((fieldName: keyof typeof formValues, value: string) => {
+        // Update form values immediately for responsive UI
+        setFormValues(prev => ({
+            ...prev,
+            [fieldName]: value
+        }));
+
+        // Mark as touched if not already
+        if (!fieldState[fieldName].touched) {
+            setFieldState(prev => ({
+                ...prev,
+                [fieldName]: { ...prev[fieldName], touched: true }
+            }));
+        }
+    }, [fieldState]);
+
+    // Handle field focus
+    const handleFieldFocus = useCallback((fieldName: keyof typeof formValues) => {
+        setFieldState(prev => ({
+            ...prev,
+            [fieldName]: { ...prev[fieldName], focused: true }
+        }));
+    }, []);
+
+    // Handle field blur
+    const handleFieldBlur = useCallback((fieldName: keyof typeof formValues) => {
+        setFieldState(prev => ({
+            ...prev,
+            [fieldName]: {
+                ...prev[fieldName],
+                focused: false,
+                touched: true
+            }
+        }));
+
+        // Immediate validation on blur for better UX
+        let error: string | undefined;
+        switch (fieldName) {
+            case 'fullName':
+                error = validateFullName(formValues.fullName);
+                break;
+            case 'email':
+                error = validateEmail(formValues.email);
+                break;
+            case 'password':
+                error = validateStrongPassword(formValues.password);
+                break;
+            case 'garageNumber':
+                error = validateGarageNumber(formValues.garageNumber);
+                break;
+        }
+
+        setValidationErrors(prev => ({
+            ...prev,
+            [fieldName]: error
+        }));
+    }, [formValues]);
+
+    // Get field error with priority: server > validation > none
+    const getFieldError = (fieldName: keyof typeof formValues) => {
+        // Don't show validation errors while the user is actively typing
+        if (fieldState[fieldName].focused && !state.errors[fieldName]) {
+            return undefined;
+        }
+        return state.errors[fieldName] || validationErrors[fieldName];
+    };
 
     return (
         <PageLayout>
@@ -151,42 +195,24 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                 <div className="xl:mt-[10vh] sm:mt-[10vh] relative z-10 flex items-center justify-center p-4">
                     <div className="w-full max-w-md">
 
-                        {/* Header */}
-                        <div className="text-center mb-8">
-                            <div className="w-full h-0.5 bg-[#87d7de] mx-auto mb-4"></div>
-                            <h2 className="text-[24pt] sm:text-[36pt] font-[IBMPlexMono-Regular] text-[#FFFFFF] mb-4">
-                                Welcome
-                            </h2>
-                            <h2 className="text-[#FFFFFF] font-[IBMPlexMono-Regular] text-[18pt]">
-                                Let's get to know each other
-                            </h2>
-                            <div className="w-full h-0.5 bg-[#87d7de] mx-auto my-4"></div>
-                        </div>
+                        <FormHeader
+                            title="Welcome"
+                            subtitle="Let's get to know each other"
+                        />
 
-                        {/* Register Card */}
-                        <div className="backdrop-blur-sm rounded-lg p-8 shadow-2xl border border-[#696969]/30">
-
+                        <FormContainer>
                             {/* Global Error */}
                             {(error || state.errors.general) && (
-                                <div className="mb-6 p-4 bg-[#B63232]/20 border border-[#B63232]/50 rounded-lg">
-                                    <p className="text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                        {error || state.errors.general}
-                                    </p>
-                                </div>
+                                <ErrorMessage message={error || state.errors.general!} />
                             )}
 
                             {/* Success message */}
                             {state.success && (
-                                <div className="mb-6 p-4 bg-[#22C55E]/20 border border-[#22C55E]/50 rounded-lg">
-                                    <p className="text-[#22C55E] text-[10pt] font-[Ubuntu-Regular]">
-                                        Registration successful! Redirecting to dashboard...
-                                    </p>
-                                </div>
+                                <SuccessMessage message="Registration successful! Redirecting to dashboard..." />
                             )}
 
-                            {/* Form with React 19 action */}
-                            <form action={formAction} className="space-y-6">
-                                {/* Full Name */}
+                            <form action={formAction} className="space-y-6" noValidate>
+                                {/* Full Name Field */}
                                 <div>
                                     <label htmlFor="fullName" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Full Name
@@ -195,28 +221,28 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                         id="fullName"
                                         name="fullName"
                                         type="text"
+                                        value={formValues.fullName}
                                         placeholder="Devon Lane"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${state.errors.fullName
+                                   ${getFieldError('fullName')
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
+                                        onChange={(e) => handleFieldChange('fullName', e.target.value)}
+                                        onFocus={() => handleFieldFocus('fullName')}
+                                        onBlur={() => handleFieldBlur('fullName')}
                                         disabled={isPending || isLoading}
-                                        required
-                                        minLength={2}
-                                        pattern="[a-zA-Z\s]+"
-                                        title="Full name should contain only letters and spaces"
                                     />
-                                    {state.errors.fullName && (
+                                    {getFieldError('fullName') && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {state.errors.fullName}
+                                            {getFieldError('fullName')}
                                         </p>
                                     )}
                                 </div>
 
-                                {/* Email */}
+                                {/* Email Field */}
                                 <div>
                                     <label htmlFor="email" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Email
@@ -225,25 +251,28 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                         id="email"
                                         name="email"
                                         type="email"
+                                        value={formValues.email}
                                         placeholder="example@gmail.com"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${state.errors.email
+                                   ${getFieldError('email')
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
+                                        onChange={(e) => handleFieldChange('email', e.target.value)}
+                                        onFocus={() => handleFieldFocus('email')}
+                                        onBlur={() => handleFieldBlur('email')}
                                         disabled={isPending || isLoading}
-                                        required
                                     />
-                                    {state.errors.email && (
+                                    {getFieldError('email') && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {state.errors.email}
+                                            {getFieldError('email')}
                                         </p>
                                     )}
                                 </div>
 
-                                {/* Password */}
+                                {/* Password Field */}
                                 <div>
                                     <label htmlFor="password" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Password
@@ -252,26 +281,28 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                         id="password"
                                         name="password"
                                         type="password"
+                                        value={formValues.password}
                                         placeholder="Create a strong password"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${state.errors.password
+                                   ${getFieldError('password')
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
+                                        onChange={(e) => handleFieldChange('password', e.target.value)}
+                                        onFocus={() => handleFieldFocus('password')}
+                                        onBlur={() => handleFieldBlur('password')}
                                         disabled={isPending || isLoading}
-                                        required
-                                        minLength={8}
                                     />
-                                    {state.errors.password && (
+                                    {getFieldError('password') && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {state.errors.password}
+                                            {getFieldError('password')}
                                         </p>
                                     )}
                                 </div>
 
-                                {/* Garage Number */}
+                                {/* Garage Number Field */}
                                 <div>
                                     <label htmlFor="garageNumber" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Garage Number
@@ -280,37 +311,33 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                         id="garageNumber"
                                         name="garageNumber"
                                         type="text"
+                                        value={formValues.garageNumber}
                                         placeholder="A-123 or 456"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${state.errors.garageNumber
+                                   ${getFieldError('garageNumber')
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
+                                        onChange={(e) => handleFieldChange('garageNumber', e.target.value)}
+                                        onFocus={() => handleFieldFocus('garageNumber')}
+                                        onBlur={() => handleFieldBlur('garageNumber')}
                                         disabled={isPending || isLoading}
-                                        required
-                                        pattern="[A-Za-z0-9\-]+"
-                                        title="Garage number should contain only letters, numbers, and hyphens"
                                     />
-                                    {state.errors.garageNumber && (
+                                    {getFieldError('garageNumber') && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {state.errors.garageNumber}
+                                            {getFieldError('garageNumber')}
                                         </p>
                                     )}
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={isPending || isLoading}
-                                    className="w-full bg-[#FFFFFF] text-[#0c0c18] py-4 px-6 rounded-lg
-                               font-[Ubuntu-Regular] text-[12pt] font-medium hover:bg-[#87d7de] hover:text-[#FFFFFF]
-                               focus:outline-none focus:ring-2 focus:ring-[#87d7de] focus:ring-offset-2
-                               focus:ring-offset-[#33455e] transition-all duration-200
-                               disabled:opacity-50 disabled:cursor-not-allowed"
+                                <SubmitButton
+                                    isLoading={isPending || isLoading}
+                                    loadingText="Signing Up..."
                                 >
-                                    {isPending || isLoading ? 'Signing Up...' : 'Sign Up'}
-                                </button>
+                                    Sign Up
+                                </SubmitButton>
                             </form>
 
                             {/* Footer Link */}
@@ -326,7 +353,7 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                     Sign in
                                 </Link>
                             </div>
-                        </div>
+                        </FormContainer>
                     </div>
                 </div>
             </div>

@@ -1,187 +1,101 @@
-export interface ValidationRule {
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    pattern?: RegExp;
-    custom?: (value: string) => boolean;
-}
+/**
+ * Validation utilities for authentication forms
+ * Contains pure validation functions for different field types
+ */
 
-export interface ValidationResult {
-    isValid: boolean;
-    error?: string;
-}
-
-export class Validator {
-    // Email validation
-    static validateEmail(email: string): ValidationResult {
-        if (!email) {
-            return { isValid: false, error: 'Email is required' };
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return { isValid: false, error: 'Please enter a valid email address' };
-        }
-
-        return { isValid: true };
+/**
+ * Validates email address format
+ * @param email - Email string to validate
+ * @returns Error message or undefined if valid
+ */
+export const validateEmail = (email: string): string | undefined => {
+    if (!email) {
+        return 'Email is required';
     }
-
-    // Password validation
-    static validatePassword(password: string, minLength: number = 8): ValidationResult {
-        if (!password) {
-            return { isValid: false, error: 'Password is required' };
-        }
-
-        if (password.length < minLength) {
-            return { isValid: false, error: `Password must be at least ${minLength} characters long` };
-        }
-
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-            return {
-                isValid: false,
-                error: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-            };
-        }
-
-        return { isValid: true };
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return 'Please enter a valid email address';
     }
+    return undefined;
+};
 
-    // Simple password validation (for login)
-    static validateSimplePassword(password: string, minLength: number = 6): ValidationResult {
-        if (!password) {
-            return { isValid: false, error: 'Password is required' };
-        }
-
-        if (password.length < minLength) {
-            return { isValid: false, error: `Password must be at least ${minLength} characters long` };
-        }
-
-        return { isValid: true };
+/**
+ * Validates password with basic requirements (for login)
+ * @param password - Password string to validate
+ * @returns Error message or undefined if valid
+ */
+export const validatePassword = (password: string): string | undefined => {
+    if (!password) {
+        return 'Password is required';
     }
-
-    // Full name validation
-    static validateFullName(name: string): ValidationResult {
-        if (!name.trim()) {
-            return { isValid: false, error: 'Full name is required' };
-        }
-
-        if (name.trim().length < 2) {
-            return { isValid: false, error: 'Full name must be at least 2 characters long' };
-        }
-
-        if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
-            return { isValid: false, error: 'Full name should contain only letters and spaces' };
-        }
-
-        return { isValid: true };
+    if (password.length < 6) {
+        return 'Password must be at least 6 characters long';
     }
+    return undefined;
+};
 
-    // Verification code validation
-    static validateCode(code: string): ValidationResult {
-        if (!code) {
-            return { isValid: false, error: 'Code is required' };
-        }
-
-        if (!/^\d{6}$/.test(code)) {
-            return { isValid: false, error: 'Code must be 6 digits' };
-        }
-
-        return { isValid: true };
+/**
+ * Validates password with strong requirements (for registration/change)
+ * @param password - Password string to validate
+ * @returns Error message or undefined if valid
+ */
+export const validateStrongPassword = (password: string): string | undefined => {
+    if (!password) {
+        return 'Password is required';
     }
-
-    // Garage number validation
-    static validateGarageNumber(garageNumber: string): ValidationResult {
-        if (!garageNumber.trim()) {
-            return { isValid: false, error: 'Garage number is required' };
-        }
-
-        if (!/^[A-Za-z0-9\-]+$/.test(garageNumber.trim())) {
-            return { isValid: false, error: 'Garage number should contain only letters, numbers, and hyphens' };
-        }
-
-        return { isValid: true };
+    if (password.length < 8) {
+        return 'Password must be at least 8 characters long';
     }
-
-    // Generic field validation
-    static validateField(value: string, rules: ValidationRule, fieldName: string): ValidationResult {
-        if (rules.required && !value.trim()) {
-            return { isValid: false, error: `${fieldName} is required` };
-        }
-
-        if (rules.minLength && value.length < rules.minLength) {
-            return {
-                isValid: false,
-                error: `${fieldName} must be at least ${rules.minLength} characters long`
-            };
-        }
-
-        if (rules.maxLength && value.length > rules.maxLength) {
-            return {
-                isValid: false,
-                error: `${fieldName} must be no more than ${rules.maxLength} characters long`
-            };
-        }
-
-        if (rules.pattern && !rules.pattern.test(value)) {
-            return {
-                isValid: false,
-                error: `${fieldName} format is invalid`
-            };
-        }
-
-        if (rules.custom && !rules.custom(value)) {
-            return {
-                isValid: false,
-                error: `${fieldName} is invalid`
-            };
-        }
-
-        return { isValid: true };
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+        return 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
     }
+    return undefined;
+};
 
-    // Validate multiple fields at once
-    static validateForm(data: Record<string, string>, rules: Record<string, ValidationRule>): Record<string, string> {
-        const errors: Record<string, string> = {};
-
-        Object.keys(rules).forEach(fieldName => {
-            const value = data[fieldName] || '';
-            const result = this.validateField(value, rules[fieldName], fieldName);
-
-            if (!result.isValid && result.error) {
-                errors[fieldName] = result.error;
-            }
-        });
-
-        return errors;
+/**
+ * Validates full name field
+ * @param name - Full name string to validate
+ * @returns Error message or undefined if valid
+ */
+export const validateFullName = (name: string): string | undefined => {
+    if (!name.trim()) {
+        return 'Full name is required';
     }
-}
-
-// Predefined validation rules for common use cases
-export const ValidationRules = {
-    email: {
-        required: true,
-        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    },
-    password: {
-        required: true,
-        minLength: 8,
-        custom: (value: string) => /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)
-    },
-    simplePassword: {
-        required: true,
-        minLength: 6
-    },
-    fullName: {
-        required: true,
-        minLength: 2,
-        pattern: /^[a-zA-Z\s]+$/
-    },
-    code: {
-        required: true,
-        pattern: /^\d{6}$/
-    },
-    garageNumber: {
-        required: true,
-        pattern: /^[A-Za-z0-9\-]+$/
+    if (name.trim().length < 2) {
+        return 'Full name must be at least 2 characters long';
     }
-} as const;
+    if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
+        return 'Full name should contain only letters and spaces';
+    }
+    return undefined;
+};
+
+/**
+ * Validates 6-digit verification code
+ * @param code - Verification code string to validate
+ * @returns Error message or undefined if valid
+ */
+export const validateCode = (code: string): string | undefined => {
+    if (!code) {
+        return 'Code is required';
+    }
+    if (!/^\d{6}$/.test(code)) {
+        return 'Code must be 6 digits';
+    }
+    return undefined;
+};
+
+/**
+ * Validates garage number field
+ * @param garageNumber - Garage number string to validate
+ * @returns Error message or undefined if valid
+ */
+export const validateGarageNumber = (garageNumber: string): string | undefined => {
+    if (!garageNumber.trim()) {
+        return 'Garage number is required';
+    }
+    if (!/^[A-Za-z0-9\-]+$/.test(garageNumber.trim())) {
+        return 'Garage number should contain only letters, numbers, and hyphens';
+    }
+    return undefined;
+};

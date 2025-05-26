@@ -1,25 +1,32 @@
-import React, { useActionState, useEffect } from 'react';
+import React, { useActionState, useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
-import { loginUser, clearError } from '../../store/authSlice';
+import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
 import Footer from "../../components/Footer.tsx";
+import FormHeader from '../../components/FormHeader';
+import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/FormContainer';
+import { createLoginAction, initialLoginState } from '../../lib/authActions';
+import { validateEmail, validatePassword } from '../../utils/validation';
 
 interface LoginPageProps {}
 
-interface LoginFormState {
-    errors: {
-        email?: string;
-        password?: string;
-        general?: string;
-    };
-    success: boolean;
-}
+// Debounce hook for performance optimization
+const useDebounce = (value: string, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
 
-const initialState: LoginFormState = {
-    errors: {},
-    success: false
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
 };
 
 const LoginPage: React.FC<LoginPageProps> = () => {
@@ -27,84 +34,123 @@ const LoginPage: React.FC<LoginPageProps> = () => {
     const navigate = useNavigate();
     const { isLoading, error, isAuthenticated } = useAuth();
 
+    // Form values state
+    const [formValues, setFormValues] = useState({
+        email: '',
+        password: ''
+    });
+
+    // Track interaction state for better UX
+    const [fieldState, setFieldState] = useState({
+        email: { touched: false, focused: false },
+        password: { touched: false, focused: false }
+    });
+
+    // Debounced values for performance (validate after user stops typing)
+    const debouncedEmail = useDebounce(formValues.email, 300);
+    const debouncedPassword = useDebounce(formValues.password, 300);
+
+    // Validation errors
+    const [validationErrors, setValidationErrors] = useState({
+        email: undefined as string | undefined,
+        password: undefined as string | undefined
+    });
+
+    // Cleanup auth errors on unmount
     useEffect(() => {
         return () => {
             dispatch(clearError());
         };
     }, [dispatch]);
 
+    // Redirect authenticated users
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/home');
+            navigate('/main-page');
         }
     }, [isAuthenticated, navigate]);
 
-    const validateEmail = (email: string): string | undefined => {
-        if (!email) {
-            return 'Email is required';
+    // Debounced validation effect - runs 300ms after user stops typing
+    useEffect(() => {
+        if (fieldState.email.touched) {
+            setValidationErrors(prev => ({
+                ...prev,
+                email: validateEmail(debouncedEmail)
+            }));
         }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return 'Please enter a valid email address';
+    }, [debouncedEmail, fieldState.email.touched]);
+
+    useEffect(() => {
+        if (fieldState.password.touched) {
+            setValidationErrors(prev => ({
+                ...prev,
+                password: validatePassword(debouncedPassword)
+            }));
         }
-        return undefined;
-    };
+    }, [debouncedPassword, fieldState.password.touched]);
 
-    const validatePassword = (password: string): string | undefined => {
-        if (!password) {
-            return 'Password is required';
+    // Create login action
+    const loginAction = createLoginAction(dispatch);
+    const [state, formAction, isPending] = useActionState(loginAction, initialLoginState);
+
+    // Optimized field change handler
+    const handleFieldChange = useCallback((fieldName: 'email' | 'password', value: string) => {
+        // Update form values immediately for responsive UI
+        setFormValues(prev => ({
+            ...prev,
+            [fieldName]: value
+        }));
+
+        // Mark as touched if not already
+        if (!fieldState[fieldName].touched) {
+            setFieldState(prev => ({
+                ...prev,
+                [fieldName]: { ...prev[fieldName], touched: true }
+            }));
         }
-        if (password.length < 6) {
-            return 'Password must be at least 6 characters long';
-        }
-        return undefined;
-    };
+    }, [fieldState]);
 
-    async function loginAction(_prevState: LoginFormState, formData: FormData): Promise<LoginFormState> {
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
+    // Handle field focus
+    const handleFieldFocus = useCallback((fieldName: 'email' | 'password') => {
+        setFieldState(prev => ({
+            ...prev,
+            [fieldName]: { ...prev[fieldName], focused: true }
+        }));
+    }, []);
 
-        const emailError = validateEmail(email);
-        const passwordError = validatePassword(password);
-
-        if (emailError || passwordError) {
-            return {
-                errors: {
-                    email: emailError,
-                    password: passwordError
-                },
-                success: false
-            };
-        }
-
-        try {
-            const result = await dispatch(loginUser({ email, password }));
-
-            if (loginUser.fulfilled.match(result)) {
-                return {
-                    errors: {},
-                    success: true
-                };
-            } else {
-                return {
-                    errors: {
-                        general: 'Login failed. Please check your credentials.'
-                    },
-                    success: false
-                };
+    // Handle field blur
+    const handleFieldBlur = useCallback((fieldName: 'email' | 'password') => {
+        setFieldState(prev => ({
+            ...prev,
+            [fieldName]: {
+                ...prev[fieldName],
+                focused: false,
+                touched: true
             }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (err) {
-            return {
-                errors: {
-                    general: 'An unexpected error occurred. Please try again.'
-                },
-                success: false
-            };
-        }
-    }
+        }));
 
-    const [state, formAction, isPending] = useActionState(loginAction, initialState);
+        // Immediate validation on blur for better UX
+        if (fieldName === 'email') {
+            setValidationErrors(prev => ({
+                ...prev,
+                email: validateEmail(formValues.email)
+            }));
+        } else if (fieldName === 'password') {
+            setValidationErrors(prev => ({
+                ...prev,
+                password: validatePassword(formValues.password)
+            }));
+        }
+    }, [formValues]);
+
+    // Get field error with priority: server > validation > none
+    const getFieldError = (fieldName: 'email' | 'password') => {
+        // Don't show validation errors while user is actively typing
+        if (fieldState[fieldName].focused && !state.errors[fieldName]) {
+            return undefined;
+        }
+        return state.errors[fieldName] || validationErrors[fieldName];
+    };
 
     return (
         <PageLayout>
@@ -113,39 +159,24 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                 <div className="xl:mt-[10vh] sm:mt-[10vh] relative z-10 flex items-center justify-center p-4">
                     <div className="w-full max-w-md">
 
-                        {/* Header */}
-                        <div className="text-center mb-8">
-                            <div className="w-full h-0.5 bg-[#87d7de] mx-auto mb-4"></div>
-                            <h2 className="text-[24pt] sm:text-[36pt] font-[IBMPlexMono-Regular] text-[#FFFFFF] mb-4">
-                                Welcome Back
-                            </h2>
-                            <h2 className="text-[#FFFFFF] font-[IBMPlexMono-Regular] text-[24pt]">Log in</h2>
-                            <div className="w-full h-0.5 bg-[#87d7de] mx-auto my-4"></div>
-                        </div>
+                        <FormHeader
+                            title="Welcome Back"
+                            subtitle="Log in"
+                        />
 
-                        {/* Login Card */}
-                        <div className="backdrop-blur-sm rounded-lg p-8 shadow-2xl border border-[#696969]/30">
-
+                        <FormContainer>
                             {/* Global Error */}
                             {(error || state.errors.general) && (
-                                <div className="mb-6 p-4 bg-[#B63232]/20 border border-[#B63232]/50 rounded-lg">
-                                    <p className="text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                        {error || state.errors.general}
-                                    </p>
-                                </div>
+                                <ErrorMessage message={error || state.errors.general!} />
                             )}
 
                             {/* Success message */}
                             {state.success && (
-                                <div className="mb-6 p-4 bg-[#22C55E]/20 border border-[#22C55E]/50 rounded-lg">
-                                    <p className="text-[#22C55E] text-[10pt] font-[Ubuntu-Regular]">
-                                        Login successful! Redirecting...
-                                    </p>
-                                </div>
+                                <SuccessMessage message="Login successful! Redirecting..." />
                             )}
 
-                            {/* Form with React 19 action */}
-                            <form action={formAction} className="space-y-6">
+                            <form action={formAction} className="space-y-6" noValidate>
+                                {/* Email Field */}
                                 <div>
                                     <label htmlFor="email" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Email
@@ -154,24 +185,28 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                         id="email"
                                         name="email"
                                         type="email"
+                                        value={formValues.email}
                                         placeholder="example@gmail.com"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${state.errors.email
+                                   ${getFieldError('email')
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
+                                        onChange={(e) => handleFieldChange('email', e.target.value)}
+                                        onFocus={() => handleFieldFocus('email')}
+                                        onBlur={() => handleFieldBlur('email')}
                                         disabled={isPending || isLoading}
-                                        required
                                     />
-                                    {state.errors.email && (
+                                    {getFieldError('email') && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {state.errors.email}
+                                            {getFieldError('email')}
                                         </p>
                                     )}
                                 </div>
 
+                                {/* Password Field */}
                                 <div>
                                     <label htmlFor="password" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
                                         Password
@@ -180,35 +215,34 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                         id="password"
                                         name="password"
                                         type="password"
+                                        value={formValues.password}
                                         placeholder="12345678"
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${state.errors.password
+                                   ${getFieldError('password')
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
+                                        onChange={(e) => handleFieldChange('password', e.target.value)}
+                                        onFocus={() => handleFieldFocus('password')}
+                                        onBlur={() => handleFieldBlur('password')}
                                         disabled={isPending || isLoading}
-                                        required
+                                        // Убрали required и другие HTML валидационные атрибуты
                                     />
-                                    {state.errors.password && (
+                                    {getFieldError('password') && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {state.errors.password}
+                                            {getFieldError('password')}
                                         </p>
                                     )}
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={isPending || isLoading}
-                                    className="w-full bg-[#FFFFFF] text-[#0c0c18] py-4 px-6 rounded-lg
-                               font-[Ubuntu-Regular] text-[12pt] font-medium hover:bg-[#87d7de] hover:text-[#FFFFFF]
-                               focus:outline-none focus:ring-2 focus:ring-[#87d7de] focus:ring-offset-2
-                               focus:ring-offset-[#33455e] transition-all duration-200
-                               disabled:opacity-50 disabled:cursor-not-allowed"
+                                <SubmitButton
+                                    isLoading={isPending || isLoading}
+                                    loadingText="Signing In..."
                                 >
-                                    {isPending || isLoading ? 'Signing In...' : 'Sign In'}
-                                </button>
+                                    Sign In
+                                </SubmitButton>
                             </form>
 
                             {/* Footer Links */}
@@ -226,7 +260,7 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                     Sign Up
                                 </Link>
                             </div>
-                        </div>
+                        </FormContainer>
                     </div>
                 </div>
             </div>
