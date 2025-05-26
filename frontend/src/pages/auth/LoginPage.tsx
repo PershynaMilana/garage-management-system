@@ -1,12 +1,13 @@
 import React, { useActionState, useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
 import Footer from "../../components/Footer.tsx";
-import FormHeader from '../../components/FormHeader';
-import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/FormContainer';
+import FormHeader from '../../components/forms/FormHeader';
+import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
 import { createLoginAction, initialLoginState } from '../../lib/authActions';
 import { validateEmail, validatePassword } from '../../utils/validation';
 
@@ -30,27 +31,25 @@ const useDebounce = (value: string, delay: number) => {
 };
 
 const LoginPage: React.FC<LoginPageProps> = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { isLoading, error, isAuthenticated } = useAuth();
 
-    // Form values state
     const [formValues, setFormValues] = useState({
         email: '',
         password: ''
     });
 
-    // Track interaction state for better UX
     const [fieldState, setFieldState] = useState({
         email: { touched: false, focused: false },
         password: { touched: false, focused: false }
     });
 
-    // Debounced values for performance (validate after user stops typing)
+    // validate after user stops typing
     const debouncedEmail = useDebounce(formValues.email, 300);
     const debouncedPassword = useDebounce(formValues.password, 300);
 
-    // Validation errors
     const [validationErrors, setValidationErrors] = useState({
         email: undefined as string | undefined,
         password: undefined as string | undefined
@@ -63,14 +62,12 @@ const LoginPage: React.FC<LoginPageProps> = () => {
         };
     }, [dispatch]);
 
-    // Redirect authenticated users
     useEffect(() => {
         if (isAuthenticated) {
             navigate('/main-page');
         }
     }, [isAuthenticated, navigate]);
 
-    // Debounced validation effect - runs 300ms after user stops typing
     useEffect(() => {
         if (fieldState.email.touched) {
             setValidationErrors(prev => ({
@@ -160,8 +157,8 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                     <div className="w-full max-w-md">
 
                         <FormHeader
-                            title="Welcome Back"
-                            subtitle="Log in"
+                            title={t('auth.login.title')}
+                            subtitle={t('auth.login.subtitle')}
                         />
 
                         <FormContainer>
@@ -172,21 +169,22 @@ const LoginPage: React.FC<LoginPageProps> = () => {
 
                             {/* Success message */}
                             {state.success && (
-                                <SuccessMessage message="Login successful! Redirecting..." />
+                                <SuccessMessage message={t('auth.login.successMessage')} />
                             )}
 
+                            {/* Form with React 19 action - noValidate отключает HTML валидацию */}
                             <form action={formAction} className="space-y-6" noValidate>
                                 {/* Email Field */}
                                 <div>
                                     <label htmlFor="email" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
-                                        Email
+                                        {t('auth.login.email')}
                                     </label>
                                     <input
                                         id="email"
                                         name="email"
                                         type="email"
                                         value={formValues.email}
-                                        placeholder="example@gmail.com"
+                                        placeholder={t('auth.login.emailPlaceholder')}
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
@@ -209,14 +207,14 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                 {/* Password Field */}
                                 <div>
                                     <label htmlFor="password" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
-                                        Password
+                                        {t('auth.login.password')}
                                     </label>
                                     <input
                                         id="password"
                                         name="password"
                                         type="password"
                                         value={formValues.password}
-                                        placeholder="12345678"
+                                        placeholder={t('auth.login.passwordPlaceholder')}
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
@@ -228,7 +226,6 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                         onFocus={() => handleFieldFocus('password')}
                                         onBlur={() => handleFieldBlur('password')}
                                         disabled={isPending || isLoading}
-                                        // Убрали required и другие HTML валидационные атрибуты
                                     />
                                     {getFieldError('password') && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
@@ -239,9 +236,9 @@ const LoginPage: React.FC<LoginPageProps> = () => {
 
                                 <SubmitButton
                                     isLoading={isPending || isLoading}
-                                    loadingText="Signing In..."
+                                    loadingText={t('auth.login.loadingText')}
                                 >
-                                    Sign In
+                                    {t('auth.login.submitButton')}
                                 </SubmitButton>
                             </form>
 
@@ -251,13 +248,13 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                                     to="/forgot-password"
                                     className="text-[#FFFFFF]/70 hover:text-[#87d7de] transition-colors duration-200 underline font-[Ubuntu-Regular] text-[10pt]"
                                 >
-                                    Forgot password?
+                                    {t('auth.login.forgotPassword')}
                                 </Link>
                                 <Link
                                     to="/signup"
                                     className="text-[#FFFFFF]/70 hover:text-[#87d7de] transition-colors duration-200 underline font-[Ubuntu-Regular] text-[10pt]"
                                 >
-                                    Sign Up
+                                    {t('auth.login.signUp')}
                                 </Link>
                             </div>
                         </FormContainer>

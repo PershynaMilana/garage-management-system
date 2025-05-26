@@ -1,7 +1,9 @@
 /**
  * Validation utilities for authentication forms
- * Contains pure validation functions for different field types
+ * Contains pure validation functions for different field types with i18n support
  */
+
+import i18n from '../i18n'; // Путь к вашему i18n файлу
 
 /**
  * Validates email address format
@@ -10,11 +12,11 @@
  */
 export const validateEmail = (email: string): string | undefined => {
     if (!email) {
-        return 'Email is required';
+        return i18n.t('validation.email.required');
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-        return 'Please enter a valid email address';
+        return i18n.t('validation.email.invalid');
     }
     return undefined;
 };
@@ -26,10 +28,10 @@ export const validateEmail = (email: string): string | undefined => {
  */
 export const validatePassword = (password: string): string | undefined => {
     if (!password) {
-        return 'Password is required';
+        return i18n.t('validation.password.required');
     }
     if (password.length < 6) {
-        return 'Password must be at least 6 characters long';
+        return i18n.t('validation.password.minLength');
     }
     return undefined;
 };
@@ -41,13 +43,13 @@ export const validatePassword = (password: string): string | undefined => {
  */
 export const validateStrongPassword = (password: string): string | undefined => {
     if (!password) {
-        return 'Password is required';
+        return i18n.t('validation.strongPassword.required');
     }
     if (password.length < 8) {
-        return 'Password must be at least 8 characters long';
+        return i18n.t('validation.strongPassword.minLength');
     }
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-        return 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+        return i18n.t('validation.strongPassword.complexity');
     }
     return undefined;
 };
@@ -59,13 +61,13 @@ export const validateStrongPassword = (password: string): string | undefined => 
  */
 export const validateFullName = (name: string): string | undefined => {
     if (!name.trim()) {
-        return 'Full name is required';
+        return i18n.t('validation.fullName.required');
     }
     if (name.trim().length < 2) {
-        return 'Full name must be at least 2 characters long';
+        return i18n.t('validation.fullName.minLength');
     }
     if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
-        return 'Full name should contain only letters and spaces';
+        return i18n.t('validation.fullName.invalid');
     }
     return undefined;
 };
@@ -77,10 +79,10 @@ export const validateFullName = (name: string): string | undefined => {
  */
 export const validateCode = (code: string): string | undefined => {
     if (!code) {
-        return 'Code is required';
+        return i18n.t('validation.code.required');
     }
     if (!/^\d{6}$/.test(code)) {
-        return 'Code must be 6 digits';
+        return i18n.t('validation.code.invalid');
     }
     return undefined;
 };
@@ -92,10 +94,10 @@ export const validateCode = (code: string): string | undefined => {
  */
 export const validateGarageNumber = (garageNumber: string): string | undefined => {
     if (!garageNumber.trim()) {
-        return 'Garage number is required';
+        return i18n.t('validation.garageNumber.required');
     }
     if (!/^[A-Za-z0-9\-]+$/.test(garageNumber.trim())) {
-        return 'Garage number should contain only letters, numbers, and hyphens';
+        return i18n.t('validation.garageNumber.invalid');
     }
     return undefined;
 };

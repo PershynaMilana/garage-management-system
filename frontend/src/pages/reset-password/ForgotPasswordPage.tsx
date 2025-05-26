@@ -1,18 +1,20 @@
 import React, { useActionState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
 import Footer from "../../components/Footer.tsx";
-import FormInput from '../../components/FormInput';
-import FormHeader from '../../components/FormHeader';
-import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/FormContainer';
+import FormInput from '../../components/forms/FormInput';
+import FormHeader from '../../components/forms/FormHeader';
+import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
 import { createForgotPasswordAction, initialForgotPasswordState } from '../../lib/authActions';
 
 interface ForgotPasswordPageProps {}
 
 const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { isLoading, error } = useAuth();
 
@@ -23,6 +25,7 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
         };
     }, [dispatch]);
 
+    // Create forgot password action
     const sendCodeAction = createForgotPasswordAction(dispatch);
     const [state, formAction, isPending] = useActionState(sendCodeAction, initialForgotPasswordState);
 
@@ -34,8 +37,8 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
                     <div className="w-full max-w-md">
 
                         <FormHeader
-                            title="Forgot Password?"
-                            subtitle="Enter your email to receive a verification code"
+                            title={t('auth.forgotPassword.title')}
+                            subtitle={t('auth.forgotPassword.subtitle')}
                         />
 
                         <FormContainer>
@@ -46,16 +49,17 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
 
                             {/* Success message */}
                             {state.codeSent && (
-                                <SuccessMessage message="Verification code has been sent to your email" />
+                                <SuccessMessage message={t('auth.forgotPassword.successMessage')} />
                             )}
 
+                            {/* Form with React 19 action - noValidate отключает HTML валидацию */}
                             <form action={formAction} className="space-y-6" noValidate>
                                 <FormInput
                                     id="email"
                                     name="email"
-                                    label="Email"
+                                    label={t('auth.forgotPassword.email')}
                                     type="email"
-                                    placeholder="example@gmail.com"
+                                    placeholder={t('auth.forgotPassword.emailPlaceholder')}
                                     error={state.errors.email}
                                     disabled={isPending || isLoading || state.codeSent}
                                 />
@@ -63,9 +67,9 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
                                 <SubmitButton
                                     isLoading={isPending || isLoading}
                                     disabled={state.codeSent}
-                                    loadingText="Sending..."
+                                    loadingText={t('auth.forgotPassword.loadingText')}
                                 >
-                                    {state.codeSent ? 'Code Sent' : 'Send Code'}
+                                    {state.codeSent ? t('auth.forgotPassword.codeSentButton') : t('auth.forgotPassword.submitButton')}
                                 </SubmitButton>
                             </form>
 
@@ -79,7 +83,7 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
                                    transition-all duration-200 focus:outline-none focus:ring-2
                                    focus:ring-[#87d7de] focus:ring-offset-2 focus:ring-offset-[#33455e]"
                                     >
-                                        Enter Code
+                                        {t('auth.forgotPassword.enterCodeButton')}
                                     </Link>
                                 </div>
                             )}
@@ -90,13 +94,13 @@ const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = () => {
                                     to="/login"
                                     className="text-[#FFFFFF]/70 hover:text-[#87d7de] transition-colors duration-200 underline font-[Ubuntu-Regular] text-[10pt]"
                                 >
-                                    Back to Sign In
+                                    {t('auth.forgotPassword.backToSignIn')}
                                 </Link>
                                 <Link
                                     to="/signup"
                                     className="text-[#FFFFFF]/70 hover:text-[#87d7de] transition-colors duration-200 underline font-[Ubuntu-Regular] text-[10pt]"
                                 >
-                                    Sign Up
+                                    {t('auth.forgotPassword.signUp')}
                                 </Link>
                             </div>
                         </FormContainer>

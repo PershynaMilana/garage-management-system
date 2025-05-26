@@ -1,0 +1,118 @@
+{
+  "validation": {
+    "email": {
+      "required": "Email є обов'язковим",
+      "invalid": "Будь ласка, введіть дійсну email адресу"
+    },
+    "password": {
+      "required": "Пароль є обов'язковим",
+      "minLength": "Пароль повинен містити щонайменше 6 символів"
+    },
+    "strongPassword": {
+      "required": "Пароль є обов'язковим",
+      "minLength": "Пароль повинен містити щонайменше 8 символів",
+      "complexity": "Пароль повинен містити щонайменше одну велику літеру, одну малу літеру та одну цифру"
+    },
+    "fullName": {
+      "required": "Повне ім'я є обов'язковим",
+      "minLength": "Повне ім'я повинно містити щонайменше 2 символи",
+      "invalid": "Повне ім'я повинно містити лише літери та пробіли"
+    },
+    "code": {
+      "required": "Код є обов'язковим",
+      "invalid": "Код повинен містити 6 цифр"
+    },
+    "garageNumber": {
+      "required": "Номер гаража є обов'язковим",
+      "invalid": "Номер гаража повинен містити лише літери, цифри та дефіси"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "З поверненням",
+      "subtitle": "Увійти",
+      "email": "Email",
+      "password": "Пароль",
+      "emailPlaceholder": "example@gmail.com",
+      "passwordPlaceholder": "12345678",
+      "submitButton": "Увійти",
+      "loadingText": "Вхід...",
+      "successMessage": "Успішний вхід! Перенаправлення...",
+      "forgotPassword": "Забули пароль?",
+      "signUp": "Зареєструватися"
+    },
+    "register": {
+      "title": "Ласкаво просимо",
+      "subtitle": "Давайте знайомитися",
+      "fullName": "Повне ім'я",
+      "email": "Email",
+      "password": "Пароль",
+      "garageNumber": "Номер гаража",
+      "fullNamePlaceholder": "Іван Іванов",
+      "emailPlaceholder": "example@gmail.com",
+      "passwordPlaceholder": "Створіть надійний пароль",
+      "garageNumberPlaceholder": "A-123 або 456",
+      "submitButton": "Зареєструватися",
+      "loadingText": "Реєстрація...",
+      "successMessage": "Реєстрація успішна! Перенаправлення на панель управління...",
+      "alreadyHaveAccount": "Вже маєте обліковий запис?",
+      "signIn": "Увійти"
+    },
+    "forgotPassword": {
+      "title": "Забули пароль?",
+      "subtitle": "Введіть свій email для отримання коду підтвердження",
+      "email": "Email",
+      "emailPlaceholder": "example@gmail.com",
+      "submitButton": "Надіслати код",
+      "codeSentButton": "Код надіслано",
+      "loadingText": "Надсилання...",
+      "successMessage": "Код підтвердження надіслано на ваш email",
+      "enterCodeButton": "Ввести код",
+      "backToSignIn": "Повернутися до входу",
+      "signUp": "Зареєструватися"
+    },
+    "changePassword": {
+      "title": "Змінити пароль",
+      "subtitle": "Введіть код підтвердження та новий пароль",
+      "verificationCode": "Код підтвердження",
+      "newPassword": "Новий пароль",
+      "codePlaceholder": "693415",
+      "passwordPlaceholder": "Введіть новий пароль",
+      "submitButton": "Змінити пароль",
+      "successButton": "Успішно!",
+      "loadingText": "Зміна пароля...",
+      "successMessage": "Пароль успішно змінено! Перенаправлення на сторінку входу...",
+      "testHint": "Для тестування використовуйте код: 693415"
+    }
+  },
+  "notFound": {
+    "pageNotFound": "Сторінка не знайдена",
+    "mainMessage": "Упс! Сторінка, яку ви шукаєте, не існує.",
+    "description": "Можливо, вона була переміщена, видалена або ви ввели неправильну URL-адресу.",
+    "goToMainPage": "Перейти на головну",
+    "goBack": "Повернутися назад",
+    "signIn": "Увійти",
+    "signUp": "Зареєструватися",
+    "helpText": "Потрібна допомога? Перевірте URL або зв'яжіться з підтримкою, якщо вважаєте, що це помилка."
+  },
+  "footer": {
+    "navigation": {
+      "title": "навігація",
+      "statistics": "статистика",
+      "userManagement": "управління користувачами",
+      "settings": "налаштування"
+    },
+    "information": {
+      "title": "інформація",
+      "termsOfUse": "умови використання",
+      "privacyPolicy": "політика конфіденційності",
+      "cookiePolicy": "політика cookie"
+    },
+    "connection": {
+      "title": "зв'язок",
+      "phone": "+38(012)-345-67-89",
+      "email": "parkflow.support@email.com"
+    },
+    "copyright": "©2025 PARKFLOW. Всі права захищені"
+  }
+}

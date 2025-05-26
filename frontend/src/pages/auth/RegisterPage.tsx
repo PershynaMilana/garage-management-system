@@ -1,12 +1,13 @@
 import React, { useActionState, useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
 import Footer from "../../components/Footer.tsx";
-import FormHeader from '../../components/FormHeader';
-import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/FormContainer';
+import FormHeader from '../../components/forms/FormHeader';
+import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
 import { createRegisterAction, initialRegisterState } from '../../lib/authActions';
 import {
     validateEmail,
@@ -35,10 +36,12 @@ const useDebounce = (value: string, delay: number) => {
 };
 
 const RegisterPage: React.FC<RegisterPageProps> = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { isLoading, error, isAuthenticated } = useAuth();
 
+    // Form values state
     const [formValues, setFormValues] = useState({
         fullName: '',
         email: '',
@@ -59,7 +62,6 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
     const debouncedPassword = useDebounce(formValues.password, 300);
     const debouncedGarageNumber = useDebounce(formValues.garageNumber, 300);
 
-    // Validation errors
     const [validationErrors, setValidationErrors] = useState({
         fullName: undefined as string | undefined,
         email: undefined as string | undefined,
@@ -181,7 +183,7 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
 
     // Get field error with priority: server > validation > none
     const getFieldError = (fieldName: keyof typeof formValues) => {
-        // Don't show validation errors while the user is actively typing
+        // Don't show validation errors while user is actively typing
         if (fieldState[fieldName].focused && !state.errors[fieldName]) {
             return undefined;
         }
@@ -196,8 +198,8 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                     <div className="w-full max-w-md">
 
                         <FormHeader
-                            title="Welcome"
-                            subtitle="Let's get to know each other"
+                            title={t('auth.register.title')}
+                            subtitle={t('auth.register.subtitle')}
                         />
 
                         <FormContainer>
@@ -208,21 +210,22 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
 
                             {/* Success message */}
                             {state.success && (
-                                <SuccessMessage message="Registration successful! Redirecting to dashboard..." />
+                                <SuccessMessage message={t('auth.register.successMessage')} />
                             )}
 
+                            {/* Form with React 19 action - noValidate отключает HTML валидацию */}
                             <form action={formAction} className="space-y-6" noValidate>
                                 {/* Full Name Field */}
                                 <div>
                                     <label htmlFor="fullName" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
-                                        Full Name
+                                        {t('auth.register.fullName')}
                                     </label>
                                     <input
                                         id="fullName"
                                         name="fullName"
                                         type="text"
                                         value={formValues.fullName}
-                                        placeholder="Devon Lane"
+                                        placeholder={t('auth.register.fullNamePlaceholder')}
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
@@ -245,14 +248,14 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                 {/* Email Field */}
                                 <div>
                                     <label htmlFor="email" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
-                                        Email
+                                        {t('auth.register.email')}
                                     </label>
                                     <input
                                         id="email"
                                         name="email"
                                         type="email"
                                         value={formValues.email}
-                                        placeholder="example@gmail.com"
+                                        placeholder={t('auth.register.emailPlaceholder')}
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
@@ -275,14 +278,14 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                 {/* Password Field */}
                                 <div>
                                     <label htmlFor="password" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
-                                        Password
+                                        {t('auth.register.password')}
                                     </label>
                                     <input
                                         id="password"
                                         name="password"
                                         type="password"
                                         value={formValues.password}
-                                        placeholder="Create a strong password"
+                                        placeholder={t('auth.register.passwordPlaceholder')}
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
@@ -305,14 +308,14 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                 {/* Garage Number Field */}
                                 <div>
                                     <label htmlFor="garageNumber" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
-                                        Garage Number
+                                        {t('auth.register.garageNumber')}
                                     </label>
                                     <input
                                         id="garageNumber"
                                         name="garageNumber"
                                         type="text"
                                         value={formValues.garageNumber}
-                                        placeholder="A-123 or 456"
+                                        placeholder={t('auth.register.garageNumberPlaceholder')}
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
@@ -334,23 +337,23 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
 
                                 <SubmitButton
                                     isLoading={isPending || isLoading}
-                                    loadingText="Signing Up..."
+                                    loadingText={t('auth.register.loadingText')}
                                 >
-                                    Sign Up
+                                    {t('auth.register.submitButton')}
                                 </SubmitButton>
                             </form>
 
                             {/* Footer Link */}
                             <div className="text-center mt-6">
                                 <span className="text-[#FFFFFF]/70 font-[Ubuntu-Regular] text-[10pt]">
-                                    Already have an account?
+                                    {t('auth.register.alreadyHaveAccount')}
                                 </span>
                                 {' '}
                                 <Link
                                     to="/login"
                                     className="text-[#FFFFFF]/70 hover:text-[#87d7de] transition-colors duration-200 underline font-[Ubuntu-Regular] text-[10pt]"
                                 >
-                                    Sign in
+                                    {t('auth.register.signIn')}
                                 </Link>
                             </div>
                         </FormContainer>

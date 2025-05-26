@@ -1,18 +1,20 @@
 import React, { useActionState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
 import Footer from "../../components/Footer.tsx";
-import FormInput from '../../components/FormInput';
-import FormHeader from '../../components/FormHeader';
-import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/FormContainer';
+import FormInput from '../../components/forms/FormInput';
+import FormHeader from '../../components/forms/FormHeader';
+import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
 import { createChangePasswordAction, initialChangePasswordState } from '../../lib/authActions';
 
 interface ChangePasswordPageProps {}
 
 const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { isLoading, error } = useAuth();
@@ -36,8 +38,8 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
                     <div className="w-full max-w-md">
 
                         <FormHeader
-                            title="Change Password"
-                            subtitle="Enter your verification code and new password"
+                            title={t('auth.changePassword.title')}
+                            subtitle={t('auth.changePassword.subtitle')}
                         />
 
                         <FormContainer>
@@ -48,16 +50,17 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
 
                             {/* Success message */}
                             {state.success && (
-                                <SuccessMessage message="Password successfully changed! Redirecting to login page..." />
+                                <SuccessMessage message={t('auth.changePassword.successMessage')} />
                             )}
 
+                            {/* Form with React 19 action - noValidate отключает HTML валидацию */}
                             <form action={formAction} className="space-y-6" noValidate>
                                 <FormInput
                                     id="code"
                                     name="code"
-                                    label="Verification Code"
+                                    label={t('auth.changePassword.verificationCode')}
                                     type="text"
-                                    placeholder="693415"
+                                    placeholder={t('auth.changePassword.codePlaceholder')}
                                     error={state.errors.code}
                                     disabled={isPending || isLoading || state.success}
                                 />
@@ -65,9 +68,9 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
                                 <FormInput
                                     id="newPassword"
                                     name="newPassword"
-                                    label="New Password"
+                                    label={t('auth.changePassword.newPassword')}
                                     type="password"
-                                    placeholder="Enter new password"
+                                    placeholder={t('auth.changePassword.passwordPlaceholder')}
                                     error={state.errors.newPassword}
                                     disabled={isPending || isLoading || state.success}
                                 />
@@ -75,9 +78,9 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
                                 <SubmitButton
                                     isLoading={isPending || isLoading}
                                     disabled={state.success}
-                                    loadingText="Changing Password..."
+                                    loadingText={t('auth.changePassword.loadingText')}
                                 >
-                                    {state.success ? 'Success!' : 'Change Password'}
+                                    {state.success ? t('auth.changePassword.successButton') : t('auth.changePassword.submitButton')}
                                 </SubmitButton>
                             </form>
                         </FormContainer>

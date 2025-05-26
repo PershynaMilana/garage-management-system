@@ -1,0 +1,118 @@
+{
+  "validation": {
+    "email": {
+      "required": "Email is required",
+      "invalid": "Please enter a valid email address"
+    },
+    "password": {
+      "required": "Password is required",
+      "minLength": "Password must be at least 6 characters long"
+    },
+    "strongPassword": {
+      "required": "Password is required",
+      "minLength": "Password must be at least 8 characters long",
+      "complexity": "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    },
+    "fullName": {
+      "required": "Full name is required",
+      "minLength": "Full name must be at least 2 characters long",
+      "invalid": "Full name should contain only letters and spaces"
+    },
+    "code": {
+      "required": "Code is required",
+      "invalid": "Code must be 6 digits"
+    },
+    "garageNumber": {
+      "required": "Garage number is required",
+      "invalid": "Garage number should contain only letters, numbers, and hyphens"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Log in",
+      "email": "Email",
+      "password": "Password",
+      "emailPlaceholder": "example@gmail.com",
+      "passwordPlaceholder": "12345678",
+      "submitButton": "Sign In",
+      "loadingText": "Signing In...",
+      "successMessage": "Login successful! Redirecting...",
+      "forgotPassword": "Forgot password?",
+      "signUp": "Sign Up"
+    },
+    "register": {
+      "title": "Welcome",
+      "subtitle": "Let's get to know each other",
+      "fullName": "Full Name",
+      "email": "Email",
+      "password": "Password",
+      "garageNumber": "Garage Number",
+      "fullNamePlaceholder": "Devon Lane",
+      "emailPlaceholder": "example@gmail.com",
+      "passwordPlaceholder": "Create a strong password",
+      "garageNumberPlaceholder": "A-123 or 456",
+      "submitButton": "Sign Up",
+      "loadingText": "Signing Up...",
+      "successMessage": "Registration successful! Redirecting to dashboard...",
+      "alreadyHaveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password?",
+      "subtitle": "Enter your email to receive a verification code",
+      "email": "Email",
+      "emailPlaceholder": "example@gmail.com",
+      "submitButton": "Send Code",
+      "codeSentButton": "Code Sent",
+      "loadingText": "Sending...",
+      "successMessage": "Verification code has been sent to your email",
+      "enterCodeButton": "Enter Code",
+      "backToSignIn": "Back to Sign In",
+      "signUp": "Sign Up"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "subtitle": "Enter your verification code and new password",
+      "verificationCode": "Verification Code",
+      "newPassword": "New Password",
+      "codePlaceholder": "693415",
+      "passwordPlaceholder": "Enter new password",
+      "submitButton": "Change Password",
+      "successButton": "Success!",
+      "loadingText": "Changing Password...",
+      "successMessage": "Password successfully changed! Redirecting to login page...",
+      "testHint": "For testing purposes, use code: 693415"
+    }
+  },
+  "notFound": {
+    "pageNotFound": "Page Not Found",
+    "mainMessage": "Oops! The page you're looking for doesn't exist.",
+    "description": "It might have been moved, deleted, or you entered the wrong URL.",
+    "goToMainPage": "Go to Main Page",
+    "goBack": "Go Back",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "helpText": "Need help? Check the URL or contact support if you believe this is an error."
+  },
+  "footer": {
+    "navigation": {
+      "title": "navigation",
+      "statistics": "statistics",
+      "userManagement": "user management",
+      "settings": "settings"
+    },
+    "information": {
+      "title": "information",
+      "termsOfUse": "terms of use",
+      "privacyPolicy": "privacy policy",
+      "cookiePolicy": "cookie policy"
+    },
+    "connection": {
+      "title": "connection",
+      "phone": "+38(012)-345-67-89",
+      "email": "parkflow.support@email.com"
+    },
+    "copyright": "©2025 PARKFLOW. All rights reserved"
+  }
+}
