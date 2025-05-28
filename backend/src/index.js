@@ -1,11 +1,23 @@
-const express = require('express');
-const app = express();
-const PORT = 3000;
+import express from 'express';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth.routes';
+import { connectToDb } from './config/db';
 
-app.get('/', (req, res) => {
-    res.send('Hello from Node.js server!');
+dotenv.config();
+
+const app = express();
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+
+app.get('/test', (req, res) => {
+  res.send('API is working!');
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+const PORT = process.env.PORT || 3000;
+
+connectToDb().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
 });
