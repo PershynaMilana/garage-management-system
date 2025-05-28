@@ -1,10 +1,9 @@
 /**
  * React 19 server actions for authentication forms
- * Contains form actions and state interfaces
+ * Contains form actions and state interfaces with updated types
  */
 
 import { AppDispatch } from '../store/store';
-
 import {
     validateEmail,
     validatePassword,
@@ -13,7 +12,8 @@ import {
     validateCode,
     validateGarageNumber
 } from '../utils/validation';
-import {changePassword, forgotPassword, loginUser, registerUser} from "../store/authSlice.ts";
+import { changePassword, forgotPassword, loginUser, registerUser } from "../store/authSlice";
+import { LoginRequest, SignUpRequest } from '../types/auth';
 
 // Form state interfaces
 export interface LoginFormState {
@@ -104,17 +104,20 @@ export const createLoginAction = (dispatch: AppDispatch) => {
         }
 
         try {
-            const result = await dispatch(loginUser({ email, password }));
+            const credentials: LoginRequest = { email, password };
+            const result = await dispatch(loginUser(credentials));
 
             if (loginUser.fulfilled.match(result)) {
                 return { errors: {}, success: true };
             } else {
+                const errorMessage = result.payload as string || 'Login failed. Please check your credentials.';
                 return {
-                    errors: { general: 'Login failed. Please check your credentials.' },
+                    errors: { general: errorMessage },
                     success: false
                 };
             }
         } catch (err) {
+            console.error('Login action error:', err);
             return {
                 errors: { general: 'An unexpected error occurred. Please try again.' },
                 success: false
@@ -157,22 +160,26 @@ export const createRegisterAction = (dispatch: AppDispatch) => {
         }
 
         try {
-            const result = await dispatch(registerUser({
+            const userData: SignUpRequest = {
                 fullName: fullName.trim(),
                 email: email.trim(),
                 password,
                 garageNumber: garageNumber.trim()
-            }));
+            };
+
+            const result = await dispatch(registerUser(userData));
 
             if (registerUser.fulfilled.match(result)) {
                 return { errors: {}, success: true };
             } else {
+                const errorMessage = result.payload as string || 'Registration failed. This email might already be in use.';
                 return {
-                    errors: { general: 'Registration failed. This email might already be in use.' },
+                    errors: { general: errorMessage },
                     success: false
                 };
             }
         } catch (err) {
+            console.error('Registration action error:', err);
             return {
                 errors: { general: 'An unexpected error occurred. Please try again.' },
                 success: false
@@ -210,13 +217,15 @@ export const createForgotPasswordAction = (dispatch: AppDispatch) => {
             if (forgotPassword.fulfilled.match(result)) {
                 return { errors: {}, success: true, codeSent: true };
             } else {
+                const errorMessage = result.payload as string || 'Failed to send code. Please check your email address.';
                 return {
-                    errors: { general: 'Failed to send code. Please check your email address.' },
+                    errors: { general: errorMessage },
                     success: false,
                     codeSent: false
                 };
             }
         } catch (err) {
+            console.error('Forgot password action error:', err);
             return {
                 errors: { general: 'An unexpected error occurred. Please try again.' },
                 success: false,
@@ -265,12 +274,14 @@ export const createChangePasswordAction = (dispatch: AppDispatch, navigate: (pat
 
                 return { errors: {}, success: true };
             } else {
+                const errorMessage = result.payload as string || 'Failed to change password. Please check your code and try again.';
                 return {
-                    errors: { general: 'Failed to change password. Please check your code and try again.' },
+                    errors: { general: errorMessage },
                     success: false
                 };
             }
         } catch (err) {
+            console.error('Change password action error:', err);
             return {
                 errors: { general: 'An unexpected error occurred. Please try again.' },
                 success: false

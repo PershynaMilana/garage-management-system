@@ -5,6 +5,8 @@ import NotFoundPage from "./pages/not-found/NotFoundPage.tsx";
 import ForgotPasswordPage from "./pages/reset-password/ForgotPasswordPage.tsx";
 import ChangePasswordPage from "./pages/reset-password/ChangePasswordPage.tsx";
 import MainPage from "./pages/main-page/MainPage.tsx";
+import SettingsPage from "./pages/settings/SettingsPage.tsx";
+import StatisticsPage from "./pages/statistics/StatisticsPage.tsx";
 
 
 function App() {
@@ -19,8 +21,14 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/change-password" element={<ChangePasswordPage />} />
 
-                {/* main */}
+                {/* settings */}
+                <Route path="/settings" element={<SettingsPage />} />
+
+                {/* main (users crud) */}
                 <Route path="/main-page" element={<MainPage />} />
+
+                {/* statistics */}
+                <Route path="/settings" element={<StatisticsPage />} />
 
                 {/* 404 */}
                 <Route path="*" element={<NotFoundPage />} />

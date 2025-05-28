@@ -1,87 +1,16 @@
 /**
- * @fileoverview Redux slice for authentication state management
- * Contains async thunks for API calls and reducers for state updates
+ * @fileoverview Redux slice for authentication state management with real API calls
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-
-/**
- * User entity representing authenticated user data
- * @interface User
- */
-export interface User {
-    /** Unique user identifier */
-    id: string;
-    /** User's email address */
-    email: string;
-    /** User's full name */
-    fullName: string;
-    /** Optional garage number associated with the user */
-    garageNumber?: string;
-}
-
-/**
- * Authentication state structure for Redux store
- * @interface AuthState
- */
-export interface AuthState {
-    /** Current authenticated user data */
-    user: User | null;
-    /** JWT authentication token */
-    token: string | null;
-    /** Loading state for async operations */
-    isLoading: boolean;
-    /** Error message from failed operations */
-    error: string | null;
-    /** Whether user is currently authenticated */
-    isAuthenticated: boolean;
-}
-
-/**
- * Request payload for user login
- * @interface LoginRequest
- */
-export interface LoginRequest {
-    /** User's email address */
-    email: string;
-    /** User's password */
-    password: string;
-}
-
-/**
- * Request payload for user registration
- * @interface RegisterRequest
- */
-export interface RegisterRequest {
-    /** User's full name */
-    fullName: string;
-    /** User's email address */
-    email: string;
-    /** User's chosen password */
-    password: string;
-    /** User's garage number */
-    garageNumber: string;
-}
-
-/**
- * Request payload for forgot password functionality
- * @interface ForgotPasswordRequest
- */
-export interface ForgotPasswordRequest {
-    /** User's email address to send reset code */
-    email: string;
-}
-
-/**
- * Request payload for password change
- * @interface ChangePasswordRequest
- */
-export interface ChangePasswordRequest {
-    /** Verification code from email */
-    code: string;
-    /** New password to set */
-    newPassword: string;
-}
+import { authApi } from '../api/authApi';
+import {
+    AuthState,
+    LoginRequest,
+    SignUpRequest,
+    ForgotPasswordRequest,
+    ChangePasswordRequest
+} from '../types/auth';
 
 /**
  * Initial authentication state
@@ -96,11 +25,7 @@ const initialState: AuthState = {
 };
 
 /**
- * Async thunk for user login
- * @param credentials - User email and password
- * @returns Promise with user data and token
- * @example
- * dispatch(loginUser({ email: 'user@example.com', password: 'password' }));
+ * Async thunk for user login with real API
  */
 export const loginUser = createAsyncThunk(
     'auth/login',
@@ -108,78 +33,43 @@ export const loginUser = createAsyncThunk(
         try {
             console.log('Login attempt:', credentials);
 
-            // Mock API call - replace with actual API
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await authApi.login(credentials);
 
-            if (credentials.email === 'test@example.com' && credentials.password === 'password') {
-                const response = {
-                    user: {
-                        id: '1',
-                        email: credentials.email,
-                        fullName: 'Test User',
-                        garageNumber: '123'
-                    },
-                    token: 'fake-jwt-token-' + Date.now()
-                };
+            // Save token to localStorage
+            localStorage.setItem('token', response.token);
 
-                // Save token to localStorage
-                localStorage.setItem('token', response.token);
-                return response;
-            } else {
-                throw new Error('Invalid credentials');
-            }
+            return response;
         } catch (error: any) {
-            return rejectWithValue(error.message);
+            console.error('Login error:', error);
+            return rejectWithValue(error.message || 'Login failed');
         }
     }
 );
 
 /**
- * Async thunk for user registration
- * @param userData - User registration data
- * @returns Promise with user data and token
- * @example
- * dispatch(registerUser({ fullName: 'John Doe', email: 'john@example.com', password: 'password', garageNumber: '123' }));
+ * Async thunk for user registration with real API
  */
 export const registerUser = createAsyncThunk(
     'auth/register',
-    async (userData: RegisterRequest, { rejectWithValue }) => {
+    async (userData: SignUpRequest, { rejectWithValue }) => {
         try {
             console.log('Register attempt:', userData);
 
-            // Mock API call - replace with actual API
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await authApi.signUp(userData);
 
-            if (userData.email && userData.password && userData.fullName) {
-                const response = {
-                    user: {
-                        id: Math.random().toString(36).substr(2, 9),
-                        email: userData.email,
-                        fullName: userData.fullName,
-                        garageNumber: userData.garageNumber
-                    },
-                    token: 'fake-jwt-token-' + Date.now()
-                };
+            // Save token to localStorage
+            localStorage.setItem('token', response.token);
 
-                // Save token to localStorage
-                localStorage.setItem('token', response.token);
-                return response;
-            } else {
-                throw new Error('Please fill in all fields');
-            }
+            return response;
         } catch (error: any) {
-            return rejectWithValue(error.message);
+            console.error('Registration error:', error);
+            return rejectWithValue(error.message || 'Registration failed');
         }
     }
 );
 
 /**
  * Async thunk for forgot password
- * Sends verification code to user's email
- * @param data - Email address for password reset
- * @returns Promise with success message
- * @example
- * dispatch(forgotPassword({ email: 'user@example.com' }));
  */
 export const forgotPassword = createAsyncThunk(
     'auth/forgotPassword',
@@ -187,23 +77,17 @@ export const forgotPassword = createAsyncThunk(
         try {
             console.log('Forgot password attempt:', data);
 
-            // Mock API call - replace with actual API
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            return { message: 'Verification code sent to your email' };
+            const response = await authApi.forgotPassword(data);
+            return response;
         } catch (error: any) {
-            return rejectWithValue(error.message);
+            console.error('Forgot password error:', error);
+            return rejectWithValue(error.message || 'Failed to send reset code');
         }
     }
 );
 
 /**
  * Async thunk for password change
- * Changes user password using verification code
- * @param data - Verification code and new password
- * @returns Promise with success message
- * @example
- * dispatch(changePassword({ code: '693415', newPassword: 'newPassword123' }));
  */
 export const changePassword = createAsyncThunk(
     'auth/changePassword',
@@ -211,32 +95,56 @@ export const changePassword = createAsyncThunk(
         try {
             console.log('Change password attempt:', data);
 
-            // Mock API call - replace with actual API
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            if (data.code === '693415') {
-                return { message: 'Password successfully changed' };
-            } else {
-                throw new Error('Invalid verification code');
-            }
+            const response = await authApi.changePassword(data);
+            return response;
         } catch (error: any) {
-            return rejectWithValue(error.message);
+            console.error('Change password error:', error);
+            return rejectWithValue(error.message || 'Failed to change password');
         }
     }
 );
 
 /**
  * Async thunk for user logout
- * Clears authentication data and removes token from storage
- * @returns Promise with null
- * @example
- * dispatch(logoutUser());
  */
 export const logoutUser = createAsyncThunk(
     'auth/logout',
-    async () => {
-        localStorage.removeItem('token');
-        return null;
+    async (_, { }) => {
+        try {
+            await authApi.logout();
+            localStorage.removeItem('token');
+            return null;
+        } catch (error: any) {
+            console.error('Logout error:', error);
+            // Even if API call fails, remove token locally
+            localStorage.removeItem('token');
+            return null;
+        }
+    }
+);
+
+/**
+ * Async thunk for validating existing token
+ */
+export const validateCurrentToken = createAsyncThunk(
+    'auth/validateToken',
+    async (_, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No token found');
+            }
+
+            const user = await authApi.getProfile();
+            return {
+                user,
+                token
+            };
+        } catch (error: any) {
+            console.error('Token validation error:', error);
+            localStorage.removeItem('token');
+            return rejectWithValue(error.message || 'Token validation failed');
+        }
     }
 );
 
@@ -249,18 +157,25 @@ const authSlice = createSlice({
     reducers: {
         /**
          * Clears any authentication error
-         * @param state - Current auth state
          */
         clearError: (state) => {
             state.error = null;
         },
         /**
          * Sets loading state manually
-         * @param state - Current auth state
-         * @param action - Action with loading boolean payload
          */
         setLoading: (state, action) => {
             state.isLoading = action.payload;
+        },
+        /**
+         * Manually clear auth state (for logout without API call)
+         */
+        clearAuth: (state) => {
+            state.user = null;
+            state.token = null;
+            state.isAuthenticated = false;
+            state.error = null;
+            localStorage.removeItem('token');
         }
     },
     extraReducers: (builder) => {
@@ -281,6 +196,8 @@ const authSlice = createSlice({
                 state.isLoading = false;
                 state.error = action.payload as string;
                 state.isAuthenticated = false;
+                state.user = null;
+                state.token = null;
             })
 
             // Register user reducers
@@ -298,6 +215,28 @@ const authSlice = createSlice({
             .addCase(registerUser.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload as string;
+                state.user = null;
+                state.token = null;
+                state.isAuthenticated = false;
+            })
+
+            // Validate token reducers
+            .addCase(validateCurrentToken.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(validateCurrentToken.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+                state.isAuthenticated = true;
+                state.error = null;
+            })
+            .addCase(validateCurrentToken.rejected, (state) => {
+                state.isLoading = false;
+                state.user = null;
+                state.token = null;
+                state.isAuthenticated = false;
+                state.error = null;
             })
 
             // Forgot password reducers
@@ -339,5 +278,5 @@ const authSlice = createSlice({
 });
 
 // Export actions and reducer
-export const { clearError, setLoading } = authSlice.actions;
+export const { clearError, setLoading, clearAuth } = authSlice.actions;
 export default authSlice.reducer;
