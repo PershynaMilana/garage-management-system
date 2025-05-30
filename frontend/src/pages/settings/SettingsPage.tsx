@@ -1,27 +1,32 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, {useState, useRef, useCallback} from 'react';
+import {useTranslation} from 'react-i18next';
 import PageLayout from '../../components/PageLayout';
-import Footer from "../../components/Footer.tsx";
+import {validateEmail, validateFullName, validateStrongPassword} from '../../utils/validation';
+import {authApi} from '../../api/authApi';
+import PhotoUploadModal from "../../components/modals/PhotoUploadModal.tsx";
+import AccountModal from "../../components/modals/AccountModal.tsx";
+import {ThemeSettings} from "../../contexts";
+import useTheme from "../../hooks/useTheme.ts";
 
-interface SettingsPageProps {}
+
+interface SettingsPageProps { }
 
 const SettingsPage: React.FC<SettingsPageProps> = () => {
-    const { i18n } = useTranslation();
+    const {i18n, t} = useTranslation();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // State для настроек
     const [activeTab, setActiveTab] = useState<'general' | 'account' | 'theme'>('general');
-    const [theme, setTheme] = useState('dark');
-    const [background, setBackground] = useState('default');
-    const [fontSize, setFontSize] = useState('24');
+    const {settings, updateTheme, updateFontSize, updateBackground} = useTheme();
     const [timeFormat, setTimeFormat] = useState('12h');
     const [language, setLanguage] = useState(i18n.language);
     const [notifications, setNotifications] = useState(true);
 
-    // State для модальных окон
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [showPhotoModal, setShowPhotoModal] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-    // State для форм
     const [profileData, setProfileData] = useState({
         name: 'Name',
         newName: '',
@@ -31,321 +36,547 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
         newEmail: ''
     });
 
+    const [validationErrors, setValidationErrors] = useState({
+        newName: '',
+        newEmail: '',
+        newPassword: ''
+    });
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
     const handleLanguageChange = (newLang: string) => {
         setLanguage(newLang);
         i18n.changeLanguage(newLang);
+
+        setTimeout(() => {
+            const {newName, newEmail, newPassword} = profileData;
+            if (validationErrors.newName && newName.trim()) {
+                setValidationErrors(prev => ({
+                    ...prev,
+                    newName: validateFullName(newName) || ''
+                }));
+            }
+            if (validationErrors.newEmail && newEmail.trim()) {
+                setValidationErrors(prev => ({
+                    ...prev,
+                    newEmail: validateEmail(newEmail) || ''
+                }));
+            }
+            if (validationErrors.newPassword && newPassword.trim()) {
+                setValidationErrors(prev => ({
+                    ...prev,
+                    newPassword: validateStrongPassword(newPassword) || ''
+                }));
+            }
+        }, 100);
+    };
+
+
+    const validateField = useCallback((field: string, value: string) => {
+        switch (field) {
+            case 'newName':
+                return validateFullName(value);
+            case 'newEmail':
+                return validateEmail(value);
+            case 'newPassword':
+                return validateStrongPassword(value);
+            default:
+                return undefined;
+        }
+    }, []);
+
+    const handleFieldChange = useCallback((field: string, value: string) => {
+        setProfileData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+
+        if (value.trim()) {
+            const error = validateField(field, value);
+            setValidationErrors(prev => ({
+                ...prev,
+                [field]: error || ''
+            }));
+        } else {
+            setValidationErrors(prev => ({
+                ...prev,
+                [field]: ''
+            }));
+        }
+    }, [validateField]);
+
+    const handleFieldBlur = useCallback((field: string, value: string) => {
+        const error = validateField(field, value);
+        setValidationErrors(prev => ({
+            ...prev,
+            [field]: error || ''
+        }));
+    }, [validateField]);
+
+    const isFormValid = useCallback(() => {
+        const {newName, newEmail, newPassword} = profileData;
+
+        if (!newName.trim() && !newEmail.trim() && !newPassword.trim()) {
+            return false;
+        }
+
+        const hasErrors = Object.values(validationErrors).some(error => error.length > 0);
+        if (hasErrors) return false;
+
+        if (newName.trim() && validateFullName(newName)) return false;
+        if (newEmail.trim() && validateEmail(newEmail)) return false;
+        return !(newPassword.trim() && validateStrongPassword(newPassword));
+
+
+    }, [profileData, validationErrors]);
+
+    const handleSaveProfile = async () => {
+        setIsLoading(true);
+
+        try {
+            const updateData = {
+                newName: profileData.newName.trim() || undefined,
+                newEmail: profileData.newEmail.trim() || undefined,
+                newPassword: profileData.newPassword.trim() || undefined
+            };
+
+            await authApi.updateProfile(updateData);
+
+            setProfileData(prev => ({
+                ...prev,
+                newName: '',
+                newEmail: '',
+                newPassword: ''
+            }));
+
+            setValidationErrors({
+                newName: '',
+                newEmail: '',
+                newPassword: ''
+            });
+
+            console.log('Profile updated successfully');
+
+        } catch (error: any) {
+            console.error('Failed to update profile:', error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUploadPhoto = async () => {
+        if (!selectedPhoto) return;
+
+        setUploadingPhoto(true);
+
+        try {
+            await authApi.uploadProfilePhoto(selectedPhoto);
+
+            console.log('Photo uploaded successfully');
+
+            setShowPhotoModal(false);
+        } catch (error: any) {
+            console.error('Failed to upload photo:', error.message);
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
+
+    const handleFileSelect = (file: File) => {
+        if (file && file.type.startsWith('image/')) {
+            setSelectedPhoto(file);
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setPhotoPreview(e.target?.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    };
+
+    const handleBrowseClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    };
+
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'general':
+                return (
+                    <div className="space-y-4 md:space-y-6">
+                        {/* Notifications */}
+                        <div
+                            className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 border-b border-[#4e6b8c]/20 gap-2 sm:gap-0">
+                            <span
+                                className="text-[14pt] md:text-[16pt] font-[Ubuntu-Regular]">{t('settings.notifications')}</span>
+                            <button
+                                onClick={() => setNotifications(!notifications)}
+                                className={`self-start sm:self-auto relative w-12 h-6 rounded-full transition-colors ${
+                                    notifications ? 'bg-[#87d7de]' : 'bg-[#4e6b8c]'
+                                }`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                                    notifications ? 'translate-x-7' : 'translate-x-1'
+                                }`}/>
+                            </button>
+                        </div>
+
+                        {/* Time Format */}
+                        <div
+                            className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 border-b border-[#4e6b8c]/20 gap-2 sm:gap-0">
+                            <span
+                                className="text-[14pt] md:text-[16pt] font-[Ubuntu-Regular]">{t('settings.timeFormat')}</span>
+                            <select
+                                value={timeFormat}
+                                onChange={(e) => setTimeFormat(e.target.value)}
+                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#87d7de] text-sm md:text-base w-full sm:w-auto"
+                            >
+                                <option value="12h">12h</option>
+                                <option value="24h">24h</option>
+                            </select>
+                        </div>
+
+                        {/* Language */}
+                        <div
+                            className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 gap-2 sm:gap-0">
+                            <span
+                                className="text-[14pt] md:text-[16pt] font-[Ubuntu-Regular]">{t('settings.language')}</span>
+                            <select
+                                value={language}
+                                onChange={(e) => handleLanguageChange(e.target.value)}
+                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#87d7de] text-sm md:text-base w-full sm:w-auto"
+                            >
+                                <option value="en">English 🇬🇧</option>
+                                <option value="uk">Ukraine 🇺🇦</option>
+                            </select>
+                        </div>
+                    </div>
+                );
+
+            case 'account':
+                return (
+                    <div className="space-y-4 md:space-y-6">
+                        {/* Profile Picture */}
+                        <div
+                            className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 border-b border-[#4e6b8c]/20 gap-4 sm:gap-0">
+                            <span
+                                className="text-[14pt] md:text-[16pt] font-[Ubuntu-Regular]">{t('settings.profilePicture')}</span>
+                            <button
+                                onClick={() => setShowPhotoModal(true)}
+                                className="relative w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-[#4e6b8c] overflow-hidden group transition-all duration-300 hover:border-[#87d7de] self-center sm:self-auto"
+                            >
+                                {photoPreview ? (
+                                    <>
+                                        <img
+                                            src={photoPreview}
+                                            alt="Profile"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div
+                                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                            <span className="text-white text-xl md:text-2xl">✎</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div
+                                            className="w-full h-full bg-[#4e6b8c]/50 flex items-center justify-center text-2xl md:text-3xl">
+                                            📷
+                                        </div>
+                                        <div
+                                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                            <span className="text-white text-xl md:text-2xl">+</span>
+                                        </div>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Account fields */}
+                        {[
+                            {label: t('settings.name'), key: 'name', type: 'text', readOnly: true},
+                            {
+                                label: t('settings.newName'),
+                                key: 'newName',
+                                type: 'text',
+                                placeholder: t('settings.enterNewName')
+                            },
+                            {label: t('settings.password'), key: 'password', type: 'password', readOnly: true},
+                            {
+                                label: t('settings.newPassword'),
+                                key: 'newPassword',
+                                type: 'password',
+                                placeholder: t('settings.enterNewPassword')
+                            },
+                            {label: t('settings.email'), key: 'email', type: 'email', readOnly: true},
+                            {
+                                label: t('settings.changeEmail'),
+                                key: 'newEmail',
+                                type: 'email',
+                                placeholder: t('settings.enterNewEmail')
+                            }
+                        ].map((field, index) => (
+                            <div key={field.key} className={`py-4 gap-2 sm:gap-0 ${
+                                index < 5 ? 'border-b border-[#4e6b8c]/20' : ''
+                            }`}>
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                                    <span
+                                        className="text-[14pt] md:text-[16pt] font-[Ubuntu-Regular]">{field.label}</span>
+                                    <div className="w-full sm:w-auto sm:min-w-[200px]">
+                                        <input
+                                            type={field.type}
+                                            value={profileData[field.key as keyof typeof profileData]}
+                                            onChange={field.readOnly ? undefined : (e) => handleFieldChange(field.key, e.target.value)}
+                                            onBlur={field.readOnly ? undefined : (e) => handleFieldBlur(field.key, e.target.value)}
+                                            placeholder={field.placeholder}
+                                            readOnly={field.readOnly}
+                                            className={`bg-[#4e6b8c]/50 border rounded-lg px-3 py-2 text-white placeholder-[#FFFFFF]/50 focus:outline-none text-sm md:text-base w-full ${
+                                                field.readOnly
+                                                    ? 'border-[#4e6b8c]'
+                                                    : validationErrors[field.key as keyof typeof validationErrors]
+                                                        ? 'border-red-500 focus:border-red-500'
+                                                        : 'border-[#4e6b8c] focus:border-[#87d7de]'
+                                            }`}
+                                        />
+                                        {!field.readOnly && validationErrors[field.key as keyof typeof validationErrors] && (
+                                            <p className="text-red-400 text-xs mt-1">
+                                                {validationErrors[field.key as keyof typeof validationErrors]}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        <button
+                            onClick={() => setShowAccountModal(true)}
+                            disabled={!isFormValid() || isLoading}
+                            className={`w-full py-3 px-6 rounded-lg font-[Ubuntu-Regular] transition-colors mt-6 ${
+                                isFormValid() && !isLoading
+                                    ? 'bg-[#4e6b8c] text-white hover:bg-[#4e6b8c]/80 cursor-pointer'
+                                    : 'bg-[#4e6b8c]/30 text-[#FFFFFF]/50 cursor-not-allowed'
+                            }`}
+                        >
+                            {isLoading ? t('common.saving') : t('settings.saveChanges')}
+                        </button>
+                    </div>
+                );
+
+            case 'theme':
+                return (
+                    <div className="space-y-4 md:space-y-6">
+                        {/* Theme */}
+                        <div
+                            className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 border-b border-theme gap-2 sm:gap-0">
+                <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
+                    {t('settings.theme')}
+                </span>
+                            <select
+                                value={settings.theme}
+                                onChange={(e) => updateTheme(e.target.value as ThemeSettings['theme'])}
+                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#87d7de] text-sm md:text-base w-full sm:w-auto"
+                            >
+                                <option value="dark" className="bg-theme-input text-theme-primary">
+                                    {t('theme.dark')}
+                                </option>
+                                <option value="light" className="bg-theme-input text-theme-primary">
+                                    {t('theme.light')}
+                                </option>
+                                <option value="default" className="bg-theme-input text-theme-primary">
+                                    {t('theme.default')}
+                                </option>
+                            </select>
+                        </div>
+
+                        {/* Background */}
+                        <div
+                            className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 border-b border-theme gap-2 sm:gap-0">
+                <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
+                    {t('settings.background')}
+                </span>
+                            <select
+                                value={settings.background}
+                                onChange={(e) => updateBackground(e.target.value as ThemeSettings['background'])}
+                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#87d7de] text-sm md:text-base w-full sm:w-auto"
+                            >
+                                <option value="default" className="bg-theme-input text-theme-primary">
+                                    {t('background.default')}
+                                </option>
+                                <option value="custom" className="bg-theme-input text-theme-primary">
+                                    {t('background.custom')}
+                                </option>
+                            </select>
+                        </div>
+
+                        {/* Font Size */}
+                        <div
+                            className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 gap-2 sm:gap-0">
+                <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
+                    {t('settings.font')}
+                </span>
+                            <select
+                                value={settings.fontSize}
+                                onChange={(e) => updateFontSize(e.target.value as ThemeSettings['fontSize'])}
+                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#87d7de] text-sm md:text-base w-full sm:w-auto"
+                            >
+                                <option value="12">
+                                    {t('fontSize.small')}
+                                </option>
+                                <option value="16">
+                                    {t('fontSize.medium')}
+                                </option>
+                                <option value="20">
+                                    {t('fontSize.large')}
+                                </option>
+                                <option value="24">
+                                    {t('fontSize.extraLarge')}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                );
+
+            default:
+                return null;
+        }
     };
 
     return (
         <PageLayout>
-            <div className="min-h-screen text-white">
+            <div className="h-auto text-white pt-[5vh]">
                 {/* Header */}
-                <div className="p-8">
-                    <h1 className="text-[36pt] font-[IBMPlexMono-Regular] text-center mb-8">Settings</h1>
+                <div className="p-4 md:p-8">
+                    <h1 className="text-[24pt] md:text-[36pt] font-[IBMPlexMono-Regular] text-left ml-0 md:ml-[12vw] mb-4 md:mb-8">{t('settings.title')}</h1>
                 </div>
 
-                {/* Main Content */}
-                <div className="flex max-w-7xl mx-auto px-8 gap-8">
-                    {/* Sidebar */}
-                    <div className="w-64 flex-shrink-0">
-                        <div className="bg-[#2a3f5f]/30 backdrop-blur-sm rounded-lg border border-[#4e6b8c]/30">
-                            <div className="p-4">
-                                <h2 className="text-[24pt] font-[IBMPlexMono-Regular] mb-4">Settings</h2>
-                                <nav className="space-y-2">
+                {/* Main Content Container */}
+                <div className="max-w-7xl mx-auto px-4 md:px-8 mb-8">
+                    <div
+                        className="bg-[#2a3f5f]/30 backdrop-blur-sm rounded-lg border border-[#4e6b8c]/30 overflow-hidden">
+                        {/* Settings Header - скрываем на мобильных */}
+                        <div className="hidden md:block p-6 border-b border-[#4e6b8c]/30">
+                            <h2 className="text-[24pt] font-[IBMPlexMono-Regular]">{t('settings.title')}</h2>
+                        </div>
+
+                        {/* Mobile Tab Selector */}
+                        <div className="md:hidden border-b border-[#4e6b8c]/30">
+                            <div className="flex">
+                                {[
+                                    {key: 'general', label: t('settings.general')},
+                                    {key: 'account', label: t('settings.account')},
+                                    {key: 'theme', label: t('settings.theme')}
+                                ].map(tab => (
                                     <button
-                                        onClick={() => setActiveTab('general')}
-                                        className={`w-full text-left p-3 rounded-lg transition-colors ${
-                                            activeTab === 'general'
-                                                ? 'bg-[#87d7de]/20 text-[#87d7de] border-l-4 border-[#87d7de]'
-                                                : 'text-[#FFFFFF]/70 hover:bg-[#4e6b8c]/20'
+                                        key={tab.key}
+                                        onClick={() => setActiveTab(tab.key as any)}
+                                        className={`flex-1 p-4 text-center transition-colors border-b-2 ${
+                                            activeTab === tab.key
+                                                ? 'text-[#87d7de] border-[#87d7de] bg-[#87d7de]/10'
+                                                : 'text-[#FFFFFF]/70 border-transparent'
                                         }`}
                                     >
-                                        General
+                                        {tab.label}
                                     </button>
-                                    <button
-                                        onClick={() => setActiveTab('account')}
-                                        className={`w-full text-left p-3 rounded-lg transition-colors ${
-                                            activeTab === 'account'
-                                                ? 'bg-[#87d7de]/20 text-[#87d7de] border-l-4 border-[#87d7de]'
-                                                : 'text-[#FFFFFF]/70 hover:bg-[#4e6b8c]/20'
-                                        }`}
-                                    >
-                                        Account
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('theme')}
-                                        className={`w-full text-left p-3 rounded-lg transition-colors ${
-                                            activeTab === 'theme'
-                                                ? 'bg-[#87d7de]/20 text-[#87d7de] border-l-4 border-[#87d7de]'
-                                                : 'text-[#FFFFFF]/70 hover:bg-[#4e6b8c]/20'
-                                        }`}
-                                    >
-                                        Theme
-                                    </button>
-                                </nav>
+                                ))}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Content Area */}
-                    <div className="flex-1">
-                        <div className="bg-[#2a3f5f]/30 backdrop-blur-sm rounded-lg border border-[#4e6b8c]/30">
-                            <div className="border-b border-[#4e6b8c]/30 p-4">
-                                <h3 className="text-[20pt] font-[IBMPlexMono-Regular]">Settings</h3>
-                            </div>
-
-                            <div className="p-6">
-                                {/* General Tab */}
-                                {activeTab === 'general' && (
-                                    <div className="space-y-6">
-                                        {/* Notifications */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Notifications/email</span>
+                        {/* Content Area */}
+                        <div className="flex flex-col md:flex-row min-h-[60vh]">
+                            {/* Desktop Sidebar */}
+                            <div className="hidden md:block w-64 flex-shrink-0 border-r border-[#4e6b8c]/30">
+                                <div className="p-6">
+                                    <nav className="space-y-2">
+                                        {[
+                                            {key: 'general', label: t('settings.general')},
+                                            {key: 'account', label: t('settings.account')},
+                                            {key: 'theme', label: t('settings.theme')}
+                                        ].map(tab => (
                                             <button
-                                                onClick={() => setNotifications(!notifications)}
-                                                className={`relative w-12 h-6 rounded-full transition-colors ${
-                                                    notifications ? 'bg-[#87d7de]' : 'bg-[#4e6b8c]'
+                                                key={tab.key}
+                                                onClick={() => setActiveTab(tab.key as any)}
+                                                className={`w-full text-left p-3 rounded-lg transition-colors ${
+                                                    activeTab === tab.key
+                                                        ? 'bg-[#87d7de]/20 text-[#87d7de] border-l-4 border-[#87d7de]'
+                                                        : 'text-[#FFFFFF]/70 hover:bg-[#4e6b8c]/20'
                                                 }`}
                                             >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                                                    notifications ? 'translate-x-7' : 'translate-x-1'
-                                                }`} />
+                                                {tab.label}
                                             </button>
-                                        </div>
+                                        ))}
+                                    </nav>
+                                </div>
+                            </div>
 
-                                        {/* Time Format */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Time format</span>
-                                            <select
-                                                value={timeFormat}
-                                                onChange={(e) => setTimeFormat(e.target.value)}
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#87d7de]"
-                                            >
-                                                <option value="12h">12h</option>
-                                                <option value="24h">24h</option>
-                                            </select>
-                                        </div>
-
-                                        {/* Language */}
-                                        <div className="flex justify-between items-center py-4">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Language</span>
-                                            <select
-                                                value={language}
-                                                onChange={(e) => handleLanguageChange(e.target.value)}
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#87d7de]"
-                                            >
-                                                <option value="en">English 🇬🇧</option>
-                                                <option value="uk">Ukraine 🇺🇦</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Account Tab */}
-                                {activeTab === 'account' && (
-                                    <div className="space-y-6">
-                                        {/* Profile Picture */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Profile Picture</span>
-                                            <button
-                                                onClick={() => setShowPhotoModal(true)}
-                                                className="w-12 h-12 bg-[#4e6b8c]/50 rounded-full border border-[#4e6b8c] flex items-center justify-center hover:bg-[#87d7de]/20 transition-colors"
-                                            >
-                                                👤
-                                            </button>
-                                        </div>
-
-                                        {/* Name */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Name</span>
-                                            <input
-                                                type="text"
-                                                value={profileData.name}
-                                                readOnly
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white"
-                                            />
-                                        </div>
-
-                                        {/* New Name */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">New name</span>
-                                            <input
-                                                type="text"
-                                                value={profileData.newName}
-                                                onChange={(e) => setProfileData({...profileData, newName: e.target.value})}
-                                                placeholder="Enter new name"
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white placeholder-[#FFFFFF]/50 focus:outline-none focus:border-[#87d7de]"
-                                            />
-                                        </div>
-
-                                        {/* Password */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Password</span>
-                                            <input
-                                                type="password"
-                                                value={profileData.password}
-                                                readOnly
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white"
-                                            />
-                                        </div>
-
-                                        {/* New Password */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">New password</span>
-                                            <input
-                                                type="password"
-                                                value={profileData.newPassword}
-                                                onChange={(e) => setProfileData({...profileData, newPassword: e.target.value})}
-                                                placeholder="Enter new password"
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white placeholder-[#FFFFFF]/50 focus:outline-none focus:border-[#87d7de]"
-                                            />
-                                        </div>
-
-                                        {/* Email */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Email</span>
-                                            <input
-                                                type="email"
-                                                value={profileData.email}
-                                                readOnly
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white"
-                                            />
-                                        </div>
-
-                                        {/* Change Email */}
-                                        <div className="flex justify-between items-center py-4">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Change email</span>
-                                            <input
-                                                type="email"
-                                                value={profileData.newEmail}
-                                                onChange={(e) => setProfileData({...profileData, newEmail: e.target.value})}
-                                                placeholder="Enter new email"
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white placeholder-[#FFFFFF]/50 focus:outline-none focus:border-[#87d7de]"
-                                            />
-                                        </div>
-
-                                        <button
-                                            onClick={() => setShowAccountModal(true)}
-                                            className="w-full bg-[#87d7de] text-[#0c0c18] py-3 px-6 rounded-lg font-[Ubuntu-Regular] text-[12pt] font-medium hover:bg-[#87d7de]/80 transition-colors"
-                                        >
-                                            Save Changes
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Theme Tab */}
-                                {activeTab === 'theme' && (
-                                    <div className="space-y-6">
-                                        {/* Theme */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Theme</span>
-                                            <select
-                                                value={theme}
-                                                onChange={(e) => setTheme(e.target.value)}
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#87d7de]"
-                                            >
-                                                <option value="dark">dark</option>
-                                                <option value="light">light</option>
-                                                <option value="default">default</option>
-                                            </select>
-                                        </div>
-
-                                        {/* Background */}
-                                        <div className="flex justify-between items-center py-4 border-b border-[#4e6b8c]/20">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Background</span>
-                                            <select
-                                                value={background}
-                                                onChange={(e) => setBackground(e.target.value)}
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#87d7de]"
-                                            >
-                                                <option value="default">default</option>
-                                                <option value="custom">custom</option>
-                                            </select>
-                                        </div>
-
-                                        {/* Font Size */}
-                                        <div className="flex justify-between items-center py-4">
-                                            <span className="text-[16pt] font-[Ubuntu-Regular]">Font</span>
-                                            <select
-                                                value={fontSize}
-                                                onChange={(e) => setFontSize(e.target.value)}
-                                                className="bg-[#4e6b8c]/50 border border-[#4e6b8c] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#87d7de]"
-                                            >
-                                                <option value="12">12</option>
-                                                <option value="16">16</option>
-                                                <option value="20">20</option>
-                                                <option value="24">24</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                )}
+                            {/* Content Area */}
+                            <div className="flex-1 p-4 md:p-6">
+                                {renderTabContent()}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Account Confirmation Modal */}
-                {showAccountModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-[#2a3f5f] border border-[#4e6b8c] rounded-lg p-6 max-w-md w-full mx-4">
-                            <h3 className="text-[18pt] font-[Ubuntu-Regular] mb-4 text-center">
-                                Change name/email/password?
-                            </h3>
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => setShowAccountModal(false)}
-                                    className="flex-1 bg-[#4e6b8c] text-white py-3 px-6 rounded-lg font-[Ubuntu-Regular] hover:bg-[#4e6b8c]/80 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        // Handle save logic here
-                                        setShowAccountModal(false);
-                                    }}
-                                    className="flex-1 bg-[#6b5b95] text-white py-3 px-6 rounded-lg font-[Ubuntu-Regular] hover:bg-[#6b5b95]/80 transition-colors"
-                                >
-                                    OK
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {/* Modals */}
+                <AccountModal
+                    isOpen={showAccountModal}
+                    onClose={() => setShowAccountModal(false)}
+                    onConfirm={async () => {
+                        setShowAccountModal(false);
+                        await handleSaveProfile();
+                    }}
+                    isLoading={isLoading}
+                />
 
-                {/* Photo Upload Modal */}
-                {showPhotoModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                        <div className="bg-[#2a3f5f] border border-[#87d7de] rounded-lg p-6 max-w-md w-full mx-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-[18pt] font-[Ubuntu-Regular] text-[#87d7de]">Photo</h3>
-                                <button
-                                    onClick={() => setShowPhotoModal(false)}
-                                    className="text-[#87d7de] hover:text-white"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                            <div className="mb-4">
-                                <h4 className="text-[16pt] font-[Ubuntu-Regular] mb-2">Choose photo</h4>
-                                <div
-                                    className="border-2 border-dashed border-[#6b5b95] rounded-lg p-8 text-center cursor-pointer hover:border-[#87d7de] transition-colors"
-                                    onClick={() => {
-                                        // Handle file upload
-                                    }}
-                                >
-                                    <div className="bg-[#6b5b95] text-white py-4 px-6 rounded-lg inline-block font-[Ubuntu-Regular]">
-                                        Browse
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="text-center text-[#87d7de] text-sm">
-                                868 x 630
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <Footer />
+                <PhotoUploadModal
+                    isOpen={showPhotoModal}
+                    onClose={() => {
+                        setShowPhotoModal(false);
+                        setSelectedPhoto(null);
+                        setPhotoPreview(null);
+                    }}
+                    selectedPhoto={selectedPhoto}
+                    photoPreview={photoPreview}
+                    isDragOver={isDragOver}
+                    fileInputRef={fileInputRef}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onBrowseClick={handleBrowseClick}
+                    onFileInputChange={handleFileInputChange}
+                    onRemovePhoto={() => {
+                        setSelectedPhoto(null);
+                        setPhotoPreview(null);
+                    }}
+                    onUploadPhoto={handleUploadPhoto}
+                    isUploading={uploadingPhoto}
+                />
             </div>
         </PageLayout>
     );

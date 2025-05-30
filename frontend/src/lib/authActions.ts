@@ -10,7 +10,7 @@ import {
     validateStrongPassword,
     validateFullName,
     validateCode,
-    validateGarageNumber
+    validatePhoneNumber
 } from '../utils/validation';
 import { changePassword, forgotPassword, loginUser, registerUser } from "../store/authSlice";
 import { LoginRequest, SignUpRequest } from '../types/auth';
@@ -30,7 +30,7 @@ export interface RegisterFormState {
         fullName?: string;
         email?: string;
         password?: string;
-        garageNumber?: string;
+        phoneNumber?: string;
         general?: string;
     };
     success: boolean;
@@ -139,21 +139,21 @@ export const createRegisterAction = (dispatch: AppDispatch) => {
         const fullName = formData.get('fullName') as string;
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
-        const garageNumber = formData.get('garageNumber') as string;
+        const phoneNumber = formData.get('phoneNumber') as string;
 
         // Validate form data
         const nameError = validateFullName(fullName);
         const emailError = validateEmail(email);
         const passwordError = validateStrongPassword(password);
-        const garageError = validateGarageNumber(garageNumber);
+        const phoneError = validatePhoneNumber(phoneNumber);
 
-        if (nameError || emailError || passwordError || garageError) {
+        if (nameError || emailError || passwordError || phoneNumber) {
             return {
                 errors: {
                     fullName: nameError,
                     email: emailError,
                     password: passwordError,
-                    garageNumber: garageError
+                    phoneNumber: phoneError
                 },
                 success: false
             };
@@ -164,7 +164,7 @@ export const createRegisterAction = (dispatch: AppDispatch) => {
                 fullName: fullName.trim(),
                 email: email.trim(),
                 password,
-                garageNumber: garageNumber.trim()
+                phoneNumber: phoneNumber.trim()
             };
 
             const result = await dispatch(registerUser(userData));

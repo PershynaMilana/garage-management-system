@@ -22,9 +22,9 @@
       "required": "Код є обов'язковим",
       "invalid": "Код повинен містити 6 цифр"
     },
-    "garageNumber": {
-      "required": "Номер гаража є обов'язковим",
-      "invalid": "Номер гаража повинен містити лише літери, цифри та дефіси"
+    "phoneNumber": {
+      "required": "Номер телефону є обов'язковим",
+      "invalid": "Номер телефону повинен містити лише цифри, пробіли, дефіси, дужки та може починатися з +"
     }
   },
   "auth": {
@@ -47,11 +47,11 @@
       "fullName": "Повне ім'я",
       "email": "Email",
       "password": "Пароль",
-      "garageNumber": "Номер гаража",
+      "phoneNumber": "Номер телефону",
       "fullNamePlaceholder": "Іван Іванов",
       "emailPlaceholder": "example@gmail.com",
       "passwordPlaceholder": "Створіть надійний пароль",
-      "garageNumberPlaceholder": "A-123 або 456",
+      "phoneNumberPlaceholder": "380991112233",
       "submitButton": "Зареєструватися",
       "loadingText": "Реєстрація...",
       "successMessage": "Реєстрація успішна! Перенаправлення на панель управління...",
@@ -114,5 +114,45 @@
       "email": "parkflow.support@email.com"
     },
     "copyright": "©2025 PARKFLOW. Всі права захищені"
+  },
+  "settings": {
+    "title": "Налаштування",
+    "general": "Загальні",
+    "account": "Обліковий запис",
+    "theme": "Тема",
+    "notifications": "Сповіщення/email",
+    "timeFormat": "Формат часу",
+    "language": "Мова",
+    "profilePicture": "Фото профілю",
+    "name": "Ім'я",
+    "newName": "Нове ім'я",
+    "password": "Пароль",
+    "newPassword": "Новий пароль",
+    "email": "Email",
+    "changeEmail": "Змінити email",
+    "enterNewName": "Введіть нове ім'я",
+    "enterNewPassword": "Введіть новий пароль",
+    "enterNewEmail": "Введіть новий email",
+    "saveChanges": "Зберегти зміни",
+    "background": "Фон",
+    "font": "Шрифт"
+  },
+  "common": {
+    "saving": "Збереження..."
+  },
+  "theme": {
+    "dark": "Темна",
+    "light": "Світла",
+    "default": "Стандартна"
+  },
+  "background": {
+    "default": "Стандартний",
+    "custom": "Користувацький"
+  },
+  "fontSize": {
+    "small": "Малий (12px)",
+    "medium": "Середній (16px)",
+    "large": "Великий (20px)",
+    "extraLarge": "Дуже великий (24px)"
   }
 }

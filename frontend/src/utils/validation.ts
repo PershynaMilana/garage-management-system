@@ -3,7 +3,7 @@
  * Contains pure validation functions for different field types with i18n support
  */
 
-import i18n from '../i18n'; // Путь к вашему i18n файлу
+import i18n from '../i18n';
 
 /**
  * Validates email address format
@@ -88,16 +88,16 @@ export const validateCode = (code: string): string | undefined => {
 };
 
 /**
- * Validates garage number field
- * @param garageNumber - Garage number string to validate
+ * Validates phone number field
  * @returns Error message or undefined if valid
+ * @param phoneNumber
  */
-export const validateGarageNumber = (garageNumber: string): string | undefined => {
-    if (!garageNumber.trim()) {
-        return i18n.t('validation.garageNumber.required');
+export const validatePhoneNumber = (phoneNumber: string): string | undefined => {
+    if (!phoneNumber.trim()) {
+        return i18n.t('validation.phoneNumber.required');
     }
-    if (!/^[A-Za-z0-9\-]+$/.test(garageNumber.trim())) {
-        return i18n.t('validation.garageNumber.invalid');
+    if (!/^\+?[\d\s\-\(\)]+$/.test(phoneNumber.trim())) {
+        return i18n.t('validation.phoneNumber.invalid');
     }
     return undefined;
 };

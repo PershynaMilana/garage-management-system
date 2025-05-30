@@ -13,8 +13,8 @@ export interface User {
     email: string;
     /** User's full name */
     fullName: string;
-    /** Optional garage number associated with the user */
-    garageNumber?: string;
+    /** Optional phone number associated with the user */
+    phoneNumber?: string;
 }
 
 /**
@@ -56,8 +56,8 @@ export interface SignUpRequest {
     email: string;
     /** User's chosen password */
     password: string;
-    /** User's garage number */
-    garageNumber: string;
+    /** User's phone number */
+    phoneNumber: string;
 }
 
 /**

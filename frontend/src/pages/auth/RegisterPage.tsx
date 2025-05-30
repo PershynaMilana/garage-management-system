@@ -5,7 +5,6 @@ import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
-import Footer from "../../components/Footer.tsx";
 import FormHeader from '../../components/forms/FormHeader';
 import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
 import { createRegisterAction, initialRegisterState } from '../../lib/authActions';
@@ -13,7 +12,7 @@ import {
     validateEmail,
     validateStrongPassword,
     validateFullName,
-    validateGarageNumber
+    validatePhoneNumber
 } from '../../utils/validation';
 
 interface RegisterPageProps {}
@@ -46,27 +45,27 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
         fullName: '',
         email: '',
         password: '',
-        garageNumber: ''
+        phoneNumber: ''
     });
 
     const [fieldState, setFieldState] = useState({
         fullName: { touched: false, focused: false },
         email: { touched: false, focused: false },
         password: { touched: false, focused: false },
-        garageNumber: { touched: false, focused: false }
+        phoneNumber: { touched: false, focused: false }
     });
 
     // validate after user stops typing
     const debouncedFullName = useDebounce(formValues.fullName, 300);
     const debouncedEmail = useDebounce(formValues.email, 300);
     const debouncedPassword = useDebounce(formValues.password, 300);
-    const debouncedGarageNumber = useDebounce(formValues.garageNumber, 300);
+    const debouncedPhoneNumber = useDebounce(formValues.phoneNumber, 300);
 
     const [validationErrors, setValidationErrors] = useState({
         fullName: undefined as string | undefined,
         email: undefined as string | undefined,
         password: undefined as string | undefined,
-        garageNumber: undefined as string | undefined
+        phoneNumber: undefined as string | undefined
     });
 
     // Cleanup auth errors on unmounting
@@ -110,13 +109,13 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
     }, [debouncedPassword, fieldState.password.touched]);
 
     useEffect(() => {
-        if (fieldState.garageNumber.touched) {
+        if (fieldState.phoneNumber.touched) {
             setValidationErrors(prev => ({
                 ...prev,
-                garageNumber: validateGarageNumber(debouncedGarageNumber)
+                phoneNumber: validatePhoneNumber(debouncedPhoneNumber)
             }));
         }
-    }, [debouncedGarageNumber, fieldState.garageNumber.touched]);
+    }, [debouncedPhoneNumber, fieldState.phoneNumber.touched]);
 
     // Create register action using extracted logic
     const registerAction = createRegisterAction(dispatch);
@@ -170,8 +169,8 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
             case 'password':
                 error = validateStrongPassword(formValues.password);
                 break;
-            case 'garageNumber':
-                error = validateGarageNumber(formValues.garageNumber);
+            case 'phoneNumber':
+                error = validatePhoneNumber(formValues.phoneNumber);
                 break;
         }
 
@@ -305,32 +304,32 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                                     )}
                                 </div>
 
-                                {/* Garage Number Field */}
+                                {/* Phone Number Field */}
                                 <div>
-                                    <label htmlFor="garageNumber" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
-                                        {t('auth.register.garageNumber')}
+                                    <label htmlFor="phoneNumber" className="block text-[#FFFFFF] font-[Ubuntu-Regular] text-[12pt] mb-3">
+                                        {t('auth.register.phoneNumber')}
                                     </label>
                                     <input
-                                        id="garageNumber"
-                                        name="garageNumber"
+                                        id="phoneNumber"
+                                        name="phoneNumber"
                                         type="text"
-                                        value={formValues.garageNumber}
-                                        placeholder={t('auth.register.garageNumberPlaceholder')}
+                                        value={formValues.phoneNumber}
+                                        placeholder={t('auth.register.phoneNumberPlaceholder')}
                                         className={`w-full px-4 py-4 bg-[#527f8b]/50 border rounded-lg
                                    text-[#FFFFFF] placeholder-[#FFFFFF]/50 font-[Ubuntu-Regular] text-[12pt]
                                    focus:outline-none focus:ring-2 transition-all duration-200 backdrop-blur-sm
-                                   ${getFieldError('garageNumber')
+                                   ${getFieldError('phoneNumber')
                                             ? 'border-[#B63232] focus:ring-[#B63232] focus:border-[#B63232]'
                                             : 'border-[#4e6b8c] focus:ring-[#87d7de] focus:border-[#87d7de]'
                                         }`}
-                                        onChange={(e) => handleFieldChange('garageNumber', e.target.value)}
-                                        onFocus={() => handleFieldFocus('garageNumber')}
-                                        onBlur={() => handleFieldBlur('garageNumber')}
+                                        onChange={(e) => handleFieldChange('phoneNumber', e.target.value)}
+                                        onFocus={() => handleFieldFocus('phoneNumber')}
+                                        onBlur={() => handleFieldBlur('phoneNumber')}
                                         disabled={isPending || isLoading}
                                     />
-                                    {getFieldError('garageNumber') && (
+                                    {getFieldError('phoneNumber') && (
                                         <p className="mt-2 text-[#B63232] text-[10pt] font-[Ubuntu-Regular]">
-                                            {getFieldError('garageNumber')}
+                                            {getFieldError('phoneNumber')}
                                         </p>
                                     )}
                                 </div>
@@ -360,7 +359,6 @@ const RegisterPage: React.FC<RegisterPageProps> = () => {
                     </div>
                 </div>
             </div>
-            <Footer />
         </PageLayout>
     );
 };

@@ -7,30 +7,25 @@ import {
     User
 } from '../types/auth';
 
-// Базовый URL для API
 const API_BASE_URL = 'http://localhost:3000/api';
 
-// Утилита для логирования запросов
 const logRequest = (method: string, url: string, data?: any) => {
-    console.log(`🌐 API Request: ${method} ${url}`);
+    console.log(`API Request: ${method} ${url}`);
     if (data) {
-        console.log('📤 Request data:', data);
+        console.log('Request data:', data);
     }
 };
 
-// Утилита для логирования ответов
 const logResponse = (method: string, url: string, response: any, duration: number) => {
-    console.log(`✅ API Response: ${method} ${url} (${duration}ms)`);
-    console.log('📥 Response data:', response);
+    console.log(`API Response: ${method} ${url} (${duration}ms)`);
+    console.log('Response data:', response);
 };
 
-// Утилита для логирования ошибок
 const logError = (method: string, url: string, error: any, duration: number) => {
-    console.log(`❌ API Error: ${method} ${url} (${duration}ms)`);
-    console.log('💥 Error:', error);
+    console.log(`API Error: ${method} ${url} (${duration}ms)`);
+    console.log('Error:', error);
 };
 
-// Утилита для создания headers с токеном
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
@@ -39,7 +34,6 @@ const getAuthHeaders = () => {
     };
 };
 
-// Обработка ошибок API
 const handleApiError = async (response: Response) => {
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -71,13 +65,12 @@ export const authApi = {
 
             logResponse('POST', url, responseData, duration);
 
-            // Преобразуем ответ в нужный формат
             return {
                 user: {
                     id: responseData.user?.id || 'unknown',
                     email: data.email,
                     fullName: responseData.user?.name || 'User',
-                    garageNumber: responseData.user?.phone || ''
+                    phoneNumber: responseData.user?.phone || ''
                 },
                 token: responseData.token
             };
@@ -92,11 +85,10 @@ export const authApi = {
         const url = `${API_BASE_URL}/auth/register`;
         const startTime = Date.now();
 
-        // Преобразуем данные в формат API
         const apiData = {
             name: data.fullName,
             email: data.email,
-            phone: data.garageNumber,
+            phone: data.phoneNumber,
             password: data.password
         };
 
@@ -117,7 +109,6 @@ export const authApi = {
 
             logResponse('POST', url, responseData, duration);
 
-            // После успешной регистрации логинимся
             return await authApi.login({
                 email: data.email,
                 password: data.password
@@ -136,7 +127,6 @@ export const authApi = {
         logRequest('POST', url, data);
 
         try {
-            // TODO: Заменить на реальный API когда будет endpoint
             await new Promise(resolve => setTimeout(resolve, 1000));
             const duration = Date.now() - startTime;
 
@@ -158,12 +148,10 @@ export const authApi = {
         logRequest('POST', url, data);
 
         try {
-            // Для демо принимаем код 693415
             if (data.code !== '693415') {
                 throw new Error('Invalid verification code');
             }
 
-            // TODO: Заменить на реальный API когда будет endpoint для смены пароля через код
             await new Promise(resolve => setTimeout(resolve, 1000));
             const duration = Date.now() - startTime;
 
@@ -185,7 +173,6 @@ export const authApi = {
         logRequest('POST', url);
 
         try {
-            // Простое удаление токена (можно добавить API вызов если нужно)
             await new Promise(resolve => setTimeout(resolve, 500));
             const duration = Date.now() - startTime;
 
@@ -193,7 +180,6 @@ export const authApi = {
         } catch (error: any) {
             const duration = Date.now() - startTime;
             logError('POST', url, error, duration);
-            // Не бросаем ошибку для logout
         }
     },
 
@@ -215,16 +201,89 @@ export const authApi = {
 
             logResponse('GET', url, responseData, duration);
 
-            // Преобразуем ответ в нужный формат
             return {
                 id: responseData.id || 'unknown',
                 email: responseData.email || '',
                 fullName: responseData.name || 'User',
-                garageNumber: responseData.phone || ''
+                phoneNumber: responseData.phone || ''
             };
         } catch (error: any) {
             const duration = Date.now() - startTime;
             logError('GET', url, error, duration);
+            throw error;
+        }
+    },
+
+    updateProfile: async (data: {
+        newName?: string;
+        newEmail?: string;
+        newPassword?: string;
+    }): Promise<{ message: string }> => {
+        const url = `${API_BASE_URL}/auth/profile`;
+        const startTime = Date.now();
+
+        const updateData: any = {};
+        if (data.newName?.trim()) updateData.name = data.newName.trim();
+        if (data.newEmail?.trim()) updateData.email = data.newEmail.trim();
+        if (data.newPassword?.trim()) updateData.password = data.newPassword.trim();
+
+        logRequest('PUT', url, updateData);
+
+        try {
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(updateData),
+            });
+
+            await handleApiError(response);
+            const responseData = await response.json();
+            const duration = Date.now() - startTime;
+
+            logResponse('PUT', url, responseData, duration);
+
+            return {
+                message: responseData.message || 'Profile updated successfully'
+            };
+        } catch (error: any) {
+            const duration = Date.now() - startTime;
+            logError('PUT', url, error, duration);
+            throw error;
+        }
+    },
+
+    uploadProfilePhoto: async (file: File): Promise<{ message: string; photoUrl?: string }> => {
+        const url = `${API_BASE_URL}/auth/profile/photo`;
+        const startTime = Date.now();
+
+        logRequest('POST', url, { fileName: file.name, fileSize: file.size });
+
+        try {
+            const formData = new FormData();
+            formData.append('photo', file);
+
+            const token = localStorage.getItem('token');
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    ...(token && { 'Authorization': `Bearer ${token}` })
+                },
+                body: formData,
+            });
+
+            await handleApiError(response);
+            const responseData = await response.json();
+            const duration = Date.now() - startTime;
+
+            logResponse('POST', url, responseData, duration);
+
+            return {
+                message: responseData.message || 'Photo uploaded successfully',
+                photoUrl: responseData.photoUrl
+            };
+        } catch (error: any) {
+            const duration = Date.now() - startTime;
+            logError('POST', url, error, duration);
             throw error;
         }
     }

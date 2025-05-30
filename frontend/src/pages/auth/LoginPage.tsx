@@ -5,7 +5,6 @@ import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
-import Footer from "../../components/Footer.tsx";
 import FormHeader from '../../components/forms/FormHeader';
 import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
 import { createLoginAction, initialLoginState } from '../../lib/authActions';
@@ -261,7 +260,6 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                     </div>
                 </div>
             </div>
-            <Footer />
         </PageLayout>
     );
 };

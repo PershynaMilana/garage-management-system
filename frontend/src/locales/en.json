@@ -14,17 +14,17 @@
       "complexity": "Password must contain at least one uppercase letter, one lowercase letter, and one number"
     },
     "fullName": {
-      "required": "Full name is required",
-      "minLength": "Full name must be at least 2 characters long",
-      "invalid": "Full name should contain only letters and spaces"
+      "required": "Name is required",
+      "minLength": "Name must be at least 2 characters long",
+      "invalid": "Name should contain only letters and spaces"
     },
     "code": {
       "required": "Code is required",
       "invalid": "Code must be 6 digits"
     },
-    "garageNumber": {
-      "required": "Garage number is required",
-      "invalid": "Garage number should contain only letters, numbers, and hyphens"
+    "phoneNumber": {
+      "required": "Phone number is required",
+      "invalid": "Phone number should contain only digits, spaces, hyphens, parentheses, and may start with +"
     }
   },
   "auth": {
@@ -47,11 +47,11 @@
       "fullName": "Full Name",
       "email": "Email",
       "password": "Password",
-      "garageNumber": "Garage Number",
+      "phoneNumber": "Phone Number",
       "fullNamePlaceholder": "Devon Lane",
       "emailPlaceholder": "example@gmail.com",
       "passwordPlaceholder": "Create a strong password",
-      "garageNumberPlaceholder": "A-123 or 456",
+      "phoneNumberPlaceholder": "380991112233",
       "submitButton": "Sign Up",
       "loadingText": "Signing Up...",
       "successMessage": "Registration successful! Redirecting to dashboard...",
@@ -114,5 +114,45 @@
       "email": "parkflow.support@email.com"
     },
     "copyright": "©2025 PARKFLOW. All rights reserved"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "account": "Account",
+    "theme": "Theme",
+    "notifications": "Notifications/email",
+    "timeFormat": "Time format",
+    "language": "Language",
+    "profilePicture": "Profile Picture",
+    "name": "Name",
+    "newName": "New name",
+    "password": "Password",
+    "newPassword": "New password",
+    "email": "Email",
+    "changeEmail": "Change email",
+    "enterNewName": "Enter new name",
+    "enterNewPassword": "Enter new password",
+    "enterNewEmail": "Enter new email",
+    "saveChanges": "Save Changes",
+    "background": "Background",
+    "font": "Font"
+  },
+  "common": {
+    "saving": "Saving..."
+  },
+  "theme": {
+    "dark": "Dark",
+    "light": "Light",
+    "default": "Default"
+  },
+  "background": {
+    "default": "Default",
+    "custom": "Custom"
+  },
+  "fontSize": {
+    "small": "Small (12px)",
+    "medium": "Medium (16px)",
+    "large": "Large (20px)",
+    "extraLarge": "Extra Large (24px)"
   }
 }

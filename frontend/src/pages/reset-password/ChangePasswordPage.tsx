@@ -5,7 +5,6 @@ import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { clearError } from '../../store/authSlice';
 import PageLayout from '../../components/PageLayout';
-import Footer from "../../components/Footer.tsx";
 import FormInput from '../../components/forms/FormInput';
 import FormHeader from '../../components/forms/FormHeader';
 import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
@@ -87,7 +86,6 @@ const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
                     </div>
                 </div>
             </div>
-            <Footer />
         </PageLayout>
     );
 };
