@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import PageLayout from '../../components/PageLayout';
+import PageLayout from '../../components/layout/PageLayout.tsx';
 import FormHeader from '../../components/forms/FormHeader';
 import { FormContainer } from '../../components/forms/FormContainer';
 import Logo from '/Logo.png';

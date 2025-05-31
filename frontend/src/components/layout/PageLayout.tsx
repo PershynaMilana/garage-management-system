@@ -1,8 +1,8 @@
 import React from 'react';
-import BackgroundCircles from './BackgroundCircles';
-import Footer from './Footer';
-import useTheme from "../hooks/useTheme.ts";
-
+import BackgroundCircles from './BackgroundCircles.tsx';
+import Footer from '../Footer.tsx';
+import Header from '../Header.tsx';
+import useTheme from "../../hooks/useTheme.ts";
 
 interface PageLayoutProps {
     children: React.ReactNode;
@@ -22,8 +22,6 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
         }
     };
 
-
-    // Для светлой темы можно добавить тонкий градиент или узор
     const getLightThemeBackground = () => {
         if (settings.theme === 'light') {
             return {
@@ -40,7 +38,10 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
             className={`min-h-screen w-full relative transition-colors duration-300 ${getBackgroundClass()}`}
             style={getLightThemeBackground()}
         >
-           <BackgroundCircles />
+            {/* Header */}
+            <Header />
+
+            <BackgroundCircles />
 
             {settings.theme === 'light' && settings.background === 'custom' && (
                 <div className="absolute inset-0 opacity-5">
@@ -55,14 +56,23 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
                 </div>
             )}
 
+            {/* Main content */}
             <div
-                className="relative z-10 min-h-screen w-full"
-                style={{ fontSize: `var(--base-font-size)` }}
+                className="relative z-10 w-full md:pl-16 pt-16 md:pt-0"
+                style={{
+                    fontSize: `var(--base-font-size)`,
+                    minHeight: 'calc(100vh - 64px)'
+                }}
             >
-                {children}
+                <div className="min-h-full pb-20">
+                    {children}
+                </div>
             </div>
 
-            <Footer />
+            {/* Footer */}
+            <div className="md:pl-16">
+                <Footer />
+            </div>
         </div>
     );
 };

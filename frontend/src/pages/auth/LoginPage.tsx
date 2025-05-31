@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '../../store/hooks';
 import { useAuth } from '../../store/hooks';
 import { clearError } from '../../store/authSlice';
-import PageLayout from '../../components/PageLayout';
+import PageLayout from '../../components/layout/PageLayout.tsx';
 import FormHeader from '../../components/forms/FormHeader';
 import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
 import { createLoginAction, initialLoginState } from '../../lib/authActions';

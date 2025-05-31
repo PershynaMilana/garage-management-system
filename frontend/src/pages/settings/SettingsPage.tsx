@@ -1,6 +1,6 @@
 import React, {useState, useRef, useCallback} from 'react';
 import {useTranslation} from 'react-i18next';
-import PageLayout from '../../components/PageLayout';
+import PageLayout from '../../components/layout/PageLayout.tsx';
 import {validateEmail, validateFullName, validateStrongPassword} from '../../utils/validation';
 import {authApi} from '../../api/authApi';
 import PhotoUploadModal from "../../components/modals/PhotoUploadModal.tsx";

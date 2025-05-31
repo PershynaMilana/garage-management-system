@@ -9,6 +9,9 @@ import ChangePasswordPage from "./pages/reset-password/ChangePasswordPage.tsx";
 import MainPage from "./pages/main-page/MainPage.tsx";
 import SettingsPage from "./pages/settings/SettingsPage.tsx";
 import StatisticsPage from "./pages/statistics/StatisticsPage.tsx";
+import TermsOfUsePage from "./pages/terms-of-use/TermsOfUsePage.tsx";
+import PrivacyPolicyPage from "./pages/privacy-policy/PrivacyPolicyPage.tsx";
+import CookiePolicyPage from "./pages/cookie-policy/CookiePolicyPage.tsx";
 
 
 
@@ -33,7 +36,16 @@ function App() {
                     <Route path="/main-page" element={<MainPage/>}/>
 
                     {/* statistics */}
-                    <Route path="/settings" element={<StatisticsPage/>}/>
+                    <Route path="/statistics" element={<StatisticsPage/>}/>
+
+                    {/* terms of use */}
+                    <Route path="/terms-of-use" element={<TermsOfUsePage/>}/>
+
+                    {/* privacy policy */}
+                    <Route path="/privacy-policy" element={<PrivacyPolicyPage/>}/>
+
+                    {/* statistics */}
+                    <Route path="/cookie-policy" element={<CookiePolicyPage/>}/>
 
                     {/* 404 */}
                     <Route path="*" element={<NotFoundPage/>}/>

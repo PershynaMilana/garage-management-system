@@ -1,7 +1,7 @@
 import React from 'react';
-import circle1 from '../assets/images/circle-1.png';
-import circle2 from '../assets/images/circle-2.png';
-import circle3 from '../assets/images/circle-3.png';
+import circle1 from '../../assets/images/circle-1.png';
+import circle2 from '../../assets/images/circle-2.png';
+import circle3 from '../../assets/images/circle-3.png';
 
 interface BackgroundCirclesProps {}
 
