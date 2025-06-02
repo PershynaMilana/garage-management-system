@@ -1,0 +1,108 @@
+import { User } from "../types/user";
+
+export const mockUsers: User[] = [
+  {
+    id: 1,
+    name: "Devon Lane",
+    email: "chelsea@email.com",
+    garageNumber: "123",
+    role: "Default member",
+    personalDebt: 510365.0,
+    avatar:
+      "https://images.unsplash.com/photo-1494790108755-2616b332c79c?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8901",
+    registrationDate: "2024-01-15",
+    lastActivity: "2024-05-28",
+  },
+  {
+    id: 2,
+    name: "Kathryn Murphy",
+    email: "nathan_gama@gmail.com",
+    garageNumber: "-",
+    role: "Manager",
+    personalDebt: 0.0,
+    avatar:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8902",
+    registrationDate: "2023-11-20",
+    lastActivity: "2024-06-01",
+  },
+  {
+    id: 3,
+    name: "Eleanor Pena",
+    email: "pedrohuyn@gmail.com",
+    garageNumber: "567",
+    role: "Default member",
+    personalDebt: 556967.0,
+    avatar:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8903",
+    registrationDate: "2024-02-10",
+    lastActivity: "2024-05-30",
+  },
+  {
+    id: 4,
+    name: "Annette Black",
+    email: "anneblacko234@gmail.com",
+    garageNumber: "-",
+    role: "Manager",
+    personalDebt: 0.0,
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8904",
+    registrationDate: "2023-12-05",
+    lastActivity: "2024-06-02",
+  },
+  {
+    id: 5,
+    name: "Guy Hawkins",
+    email: "midget12456@gmail.com",
+    garageNumber: "1244",
+    role: "Default member",
+    personalDebt: 54670.44,
+    avatar:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8905",
+    registrationDate: "2024-03-12",
+    lastActivity: "2024-05-29",
+  },
+  {
+    id: 6,
+    name: "Floyd Miles",
+    email: "matheeuf@gmail.com",
+    garageNumber: "345",
+    role: "Default member",
+    personalDebt: 524456.56,
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8906",
+    registrationDate: "2024-01-08",
+    lastActivity: "2024-05-31",
+  },
+  {
+    id: 7,
+    name: "Cameron Williamson",
+    email: "cameron.w@email.com",
+    garageNumber: "789",
+    role: "Admin",
+    personalDebt: 0.0,
+    avatar:
+      "https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8907",
+    registrationDate: "2023-08-15",
+    lastActivity: "2024-06-02",
+  },
+  {
+    id: 8,
+    name: "Jenny Wilson",
+    email: "jenny.wilson@email.com",
+    garageNumber: "456",
+    role: "Default member",
+    personalDebt: 123456.78,
+    avatar:
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8908",
+    registrationDate: "2024-04-20",
+    lastActivity: "2024-06-01",
+  },
+];
