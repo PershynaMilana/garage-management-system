@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from 'react-i18next';
 import StatCard from "./StatCard.tsx";
 import PeriodSelector from "./PeriodSelector.tsx";
 import { statisticsData } from "../../data/StatisticsData.ts";
@@ -9,48 +10,49 @@ interface GeneralStatisticsProps {
 }
 
 const GeneralStatistics: React.FC<GeneralStatisticsProps> = ({
-  selectedPeriod,
-  onPeriodChange,
-}) => {
+                                                               selectedPeriod,
+                                                               onPeriodChange,
+                                                             }) => {
+  const { t } = useTranslation();
   const currentData = statisticsData[selectedPeriod];
 
   const statsData = [
     {
       value: currentData.vacantGarages.toString(),
-      label: "Total amount of vacant garages",
+      label: t('statistics.general.vacantGarages'),
     },
     {
       value: currentData.totalDebt.toLocaleString(),
-      label: "Total number of debt",
+      label: t('statistics.general.totalDebt'),
     },
     {
       value: `${currentData.activeMembers}%`,
-      label: "Percentage of active members",
+      label: t('statistics.general.activeMembers'),
     },
     {
       value: currentData.membersWithDebts.toString(),
-      label: "Number of members with debts",
+      label: t('statistics.general.membersWithDebts'),
     },
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-medium text-[#87d7de] font-mono tracking-wide">
-          general statistics
-        </h2>
-        <PeriodSelector
-          selectedPeriod={selectedPeriod}
-          onPeriodChange={onPeriodChange}
-        />
-      </div>
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-medium text-[#87d7de] font-mono tracking-wide">
+            {t('statistics.general.title')}
+          </h2>
+          <PeriodSelector
+              selectedPeriod={selectedPeriod}
+              onPeriodChange={onPeriodChange}
+          />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {statsData.map((stat, index) => (
-          <StatCard key={index} value={stat.value} label={stat.label} />
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {statsData.map((stat, index) => (
+              <StatCard key={index} value={stat.value} label={stat.label} />
+          ))}
+        </div>
       </div>
-    </div>
   );
 };
 

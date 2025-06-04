@@ -1,3 +1,111 @@
+// import { User } from "../types/user";
+
+// export const mockUsers: User[] = [
+//   {
+//     id: 1,
+//     name: "Devon Lane",
+//     email: "chelsea@email.com",
+//     garageNumber: "123",
+//     role: "Default member",
+//     personalDebt: 510365.0,
+//     avatar:
+//       "https://images.unsplash.com/photo-1494790108755-2616b332c79c?w=40&h=40&fit=crop&crop=face",
+//     phone: "+1 234 567 8901",
+//     registrationDate: "2024-01-15",
+//     lastActivity: "2024-05-28",
+//   },
+//   {
+//     id: 2,
+//     name: "Kathryn Murphy",
+//     email: "nathan_gama@gmail.com",
+//     garageNumber: "-",
+//     role: "Manager",
+//     personalDebt: 0.0,
+//     avatar:
+//       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face",
+//     phone: "+1 234 567 8902",
+//     registrationDate: "2023-11-20",
+//     lastActivity: "2024-06-01",
+//   },
+//   {
+//     id: 3,
+//     name: "Eleanor Pena",
+//     email: "pedrohuyn@gmail.com",
+//     garageNumber: "567",
+//     role: "Default member",
+//     personalDebt: 556967.0,
+//     avatar:
+//       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=40&h=40&fit=crop&crop=face",
+//     phone: "+1 234 567 8903",
+//     registrationDate: "2024-02-10",
+//     lastActivity: "2024-05-30",
+//   },
+//   {
+//     id: 4,
+//     name: "Annette Black",
+//     email: "anneblacko234@gmail.com",
+//     garageNumber: "-",
+//     role: "Manager",
+//     personalDebt: 0.0,
+//     avatar:
+//       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
+//     phone: "+1 234 567 8904",
+//     registrationDate: "2023-12-05",
+//     lastActivity: "2024-06-02",
+//   },
+//   {
+//     id: 5,
+//     name: "Guy Hawkins",
+//     email: "midget12456@gmail.com",
+//     garageNumber: "1244",
+//     role: "Default member",
+//     personalDebt: 54670.44,
+//     avatar:
+//       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
+//     phone: "+1 234 567 8905",
+//     registrationDate: "2024-03-12",
+//     lastActivity: "2024-05-29",
+//   },
+//   {
+//     id: 6,
+//     name: "Floyd Miles",
+//     email: "matheeuf@gmail.com",
+//     garageNumber: "345",
+//     role: "Default member",
+//     personalDebt: 524456.56,
+//     avatar:
+//       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face",
+//     phone: "+1 234 567 8906",
+//     registrationDate: "2024-01-08",
+//     lastActivity: "2024-05-31",
+//   },
+//   {
+//     id: 7,
+//     name: "Cameron Williamson",
+//     email: "cameron.w@email.com",
+//     garageNumber: "789",
+//     role: "Admin",
+//     personalDebt: 0.0,
+//     avatar:
+//       "https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=40&h=40&fit=crop&crop=face",
+//     phone: "+1 234 567 8907",
+//     registrationDate: "2023-08-15",
+//     lastActivity: "2024-06-02",
+//   },
+//   {
+//     id: 8,
+//     name: "Jenny Wilson",
+//     email: "jenny.wilson@email.com",
+//     garageNumber: "456",
+//     role: "Default member",
+//     personalDebt: 123456.78,
+//     avatar:
+//       "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=40&h=40&fit=crop&crop=face",
+//     phone: "+1 234 567 8908",
+//     registrationDate: "2024-04-20",
+//     lastActivity: "2024-06-01",
+//   },
+// ];
 import { User } from "../types/user";
 
 export const mockUsers: User[] = [
@@ -5,7 +113,7 @@ export const mockUsers: User[] = [
     id: 1,
     name: "Devon Lane",
     email: "chelsea@email.com",
-    garageNumber: "123",
+    garageNumber: "001",
     role: "Default member",
     personalDebt: 510365.0,
     avatar:
@@ -31,7 +139,7 @@ export const mockUsers: User[] = [
     id: 3,
     name: "Eleanor Pena",
     email: "pedrohuyn@gmail.com",
-    garageNumber: "567",
+    garageNumber: "003",
     role: "Default member",
     personalDebt: 556967.0,
     avatar:
@@ -57,7 +165,7 @@ export const mockUsers: User[] = [
     id: 5,
     name: "Guy Hawkins",
     email: "midget12456@gmail.com",
-    garageNumber: "1244",
+    garageNumber: "005",
     role: "Default member",
     personalDebt: 54670.44,
     avatar:
@@ -70,7 +178,7 @@ export const mockUsers: User[] = [
     id: 6,
     name: "Floyd Miles",
     email: "matheeuf@gmail.com",
-    garageNumber: "345",
+    garageNumber: "006",
     role: "Default member",
     personalDebt: 524456.56,
     avatar:
@@ -83,7 +191,7 @@ export const mockUsers: User[] = [
     id: 7,
     name: "Cameron Williamson",
     email: "cameron.w@email.com",
-    garageNumber: "789",
+    garageNumber: "007",
     role: "Admin",
     personalDebt: 0.0,
     avatar:
@@ -96,7 +204,7 @@ export const mockUsers: User[] = [
     id: 8,
     name: "Jenny Wilson",
     email: "jenny.wilson@email.com",
-    garageNumber: "456",
+    garageNumber: "008",
     role: "Default member",
     personalDebt: 123456.78,
     avatar:
@@ -104,5 +212,71 @@ export const mockUsers: User[] = [
     phone: "+1 234 567 8908",
     registrationDate: "2024-04-20",
     lastActivity: "2024-06-01",
+  },
+  {
+    id: 9,
+    name: "Robert Fox",
+    email: "robert.fox@email.com",
+    garageNumber: "009",
+    role: "Default member",
+    personalDebt: 75000.0,
+    avatar:
+      "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8909",
+    registrationDate: "2024-03-01",
+    lastActivity: "2024-05-28",
+  },
+  {
+    id: 10,
+    name: "Jacob Jones",
+    email: "jacob.jones@email.com",
+    garageNumber: "010",
+    role: "Default member",
+    personalDebt: 25000.0,
+    avatar:
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8910",
+    registrationDate: "2024-02-15",
+    lastActivity: "2024-06-01",
+  },
+
+  {
+    id: 11,
+    name: "Sarah Connor",
+    email: "sarah.connor@email.com",
+    garageNumber: "-",
+    role: "Default member",
+    personalDebt: 0.0,
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8911",
+    registrationDate: "2024-05-01",
+    lastActivity: "2024-06-02",
+  },
+  {
+    id: 12,
+    name: "John Smith",
+    email: "john.smith@email.com",
+    garageNumber: "-",
+    role: "Default member",
+    personalDebt: 0.0,
+    avatar:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8912",
+    registrationDate: "2024-05-15",
+    lastActivity: "2024-06-01",
+  },
+  {
+    id: 13,
+    name: "Maria Garcia",
+    email: "maria.garcia@email.com",
+    garageNumber: "-",
+    role: "Default member",
+    personalDebt: 0.0,
+    avatar:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=40&h=40&fit=crop&crop=face",
+    phone: "+1 234 567 8913",
+    registrationDate: "2024-05-20",
+    lastActivity: "2024-06-02",
   },
 ];

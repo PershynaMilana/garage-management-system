@@ -10,14 +10,14 @@ const StatisticsPage: React.FC = () => {
 
   return (
     <PageLayout>
-      <div className="min-h-screen text-almost-white">
+      <div className="text-almost-white">
         {/* Header */}
-        <div className="px-4 md:px-8 pt-12 pb-8">
+        <div className="px-4 md:px-8 pt-12 pb-8 xl:ml-[10vw] ">
           <StatisticsHeader />
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 md:px-8 pb-8">
+        <div className="mt-[5vh] max-w-7xl mx-auto px-4 md:px-8 pb-8">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left side - Statistics cards */}
             <div className="flex-1">

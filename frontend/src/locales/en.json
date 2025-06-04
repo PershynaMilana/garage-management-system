@@ -138,7 +138,8 @@
     "font": "Font"
   },
   "common": {
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "garage": "Garage"
   },
   "theme": {
     "dark": "Dark",
@@ -312,6 +313,102 @@
       "section6": {
         "title": "Updates to This Cookie Policy",
         "content1": "We may update this Cookie Policy periodically to reflect changes in our practices or applicable laws. Please review this policy regularly to stay informed about our use of cookies."
+      }
+    }
+  },
+  "userManagement": {
+    "header": {
+      "title": "User management section",
+      "subtitle": "list of users"
+    },
+    "table": {
+      "noUsers": "No users found"
+    },
+    "filters": {
+      "title": "User roles"
+    },
+    "roles": {
+      "defaultMember": "Default member",
+      "manager": "Manager",
+      "admin": "Admin"
+    }
+  },
+  "garageManagement": {
+    "header": {
+      "title": "Garage Management",
+      "description": "Manage access points for cooperative users, activate or deactivate garage spaces. Register new users and track the payment balance of each cooperative member."
+    },
+    "grid": {
+      "title": "Garage Layout",
+      "legend": {
+        "free": "Free",
+        "occupied": "Occupied",
+        "debt": "Debt"
+      },
+      "stats": {
+        "free": "Free",
+        "occupied": "Occupied",
+        "withDebts": "With debts"
+      }
+    },
+    "modal": {
+      "garageFree": "Garage is free",
+      "garageFreeDescription": "This garage is not occupied. You can assign it to a user.",
+      "assignUser": "Assign user",
+      "editData": "Edit data",
+      "removeFromGarage": "Remove from garage",
+      "debt": "Debt",
+      "registration": "Registration",
+      "lastActivity": "Last activity"
+    },
+    "usersWithoutGarage": {
+      "title": "Users without garage",
+      "registerNew": "Register new",
+      "allUsersHaveGarages": "All users have assigned garages",
+      "assignGarage": "Assign garage"
+    },
+    "assignModal": {
+      "title": "Assign garage to user",
+      "selectUser": "Select user:",
+      "selectGarage": "Select free garage:",
+      "assignment": "Assignment",
+      "cancel": "Cancel",
+      "assign": "Assign"
+    },
+    "registerModal": {
+      "title": "Register new user",
+      "fullName": "Full name",
+      "enterFullName": "Enter full name",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "cancel": "Cancel",
+      "register": "Register",
+      "validation": {
+        "nameRequired": "Name is required",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email",
+        "phoneRequired": "Phone is required"
+      }
+    }
+  },
+  "statistics": {
+    "header": {
+      "title": "Statistics section",
+      "description": "In this section, you can view your statistics for your garage cooperative. You will be able to track number of debts, total amount of vacant garages, and other statistics for convenient and comfortable administration. For convenience, the statistics are provided in the form of graphs and cards, making it easy to analyze performance across different criteria."
+    },
+    "general": {
+      "title": "general statistics",
+      "vacantGarages": "Total amount of vacant garages",
+      "totalDebt": "Total number of debt",
+      "activeMembers": "Percentage of active members",
+      "membersWithDebts": "Number of members with debts"
+    },
+    "chart": {
+      "timeUnit": "min",
+      "legend": {
+        "correctAnswers": "% of correct answers",
+        "completionSpeed": "task completion speed"
       }
     }
   }
