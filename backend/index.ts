@@ -3,28 +3,35 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import { connectToDb } from './config/db';
+import path from 'path'; 
+import 'express-async-handler';
+import userRoutes from './routes/user.routes';
 
 dotenv.config();
 
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173', // для запросов с клиента
-  credentials: true
+    origin: 'http://localhost:5173', 
+    credentials: true
 }));
 
 app.use(express.json());
 
+app.use('/api/users', userRoutes); 
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 app.use('/api/auth', authRoutes);
 
 app.get('/test', (req, res) => {
-  res.send('API is working!');
+    res.send('API is working!');
 });
 
 const PORT = process.env.PORT || 3000;
 
 connectToDb().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-  });
+    app.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+    });
 });

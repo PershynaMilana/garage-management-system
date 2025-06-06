@@ -8,13 +8,15 @@
  */
 export interface User {
     /** Unique user identifier */
-    id: string;
+    id: string; // Або number, залежить від бекенду
     /** User's email address */
     email: string;
     /** User's full name */
     fullName: string;
     /** Optional phone number associated with the user */
     phoneNumber?: string;
+    /** Optional URL to user's profile photo */
+    photoUrl?: string; // Додано для синхронізації з бекендом
 }
 
 /**
@@ -74,8 +76,8 @@ export interface ForgotPasswordRequest {
  * @interface ChangePasswordRequest
  */
 export interface ChangePasswordRequest {
-    /** Verification code from email */
-    code: string;
+    /** Old password to verify */
+    oldPassword: string; // Змінено з 'code'
     /** New password to set */
     newPassword: string;
 }
@@ -86,7 +88,7 @@ export interface ChangePasswordRequest {
  */
 export interface AuthResponse {
     /** Authenticated user data */
-    user: User;
+    user: User; // Тип User тепер включає photoUrl
     /** JWT authentication token */
     token: string;
 }

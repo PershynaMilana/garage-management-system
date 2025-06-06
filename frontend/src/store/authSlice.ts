@@ -9,7 +9,8 @@ import {
     LoginRequest,
     SignUpRequest,
     ForgotPasswordRequest,
-    ChangePasswordRequest
+    ChangePasswordRequest,
+    User // Імпортуємо інтерфейс User
 } from '../types/auth';
 
 /**
@@ -38,7 +39,8 @@ export const loginUser = createAsyncThunk(
             // Save token to localStorage
             localStorage.setItem('token', response.token);
 
-            return response;
+            // Повертаємо повний об'єкт користувача з токеном
+            return { user: response.user, token: response.token };
         } catch (error: any) {
             console.error('Login error:', error);
             return rejectWithValue(error.message || 'Login failed');
@@ -57,10 +59,9 @@ export const registerUser = createAsyncThunk(
 
             const response = await authApi.signUp(userData);
 
-            // Save token to localStorage
-            localStorage.setItem('token', response.token);
-
-            return response;
+            // authApi.signUp вже викликає login, тому токен буде збережено там
+            // Повертаємо повний об'єкт користувача з токеном
+            return { user: response.user, token: response.token };
         } catch (error: any) {
             console.error('Registration error:', error);
             return rejectWithValue(error.message || 'Registration failed');
@@ -109,16 +110,14 @@ export const changePassword = createAsyncThunk(
  */
 export const logoutUser = createAsyncThunk(
     'auth/logout',
-    async (_, { }) => {
+    async (_, { rejectWithValue }) => {
         try {
-            await authApi.logout();
             localStorage.removeItem('token');
+            await authApi.logout(); 
             return null;
         } catch (error: any) {
-            console.error('Logout error:', error);
-            // Even if API call fails, remove token locally
-            localStorage.removeItem('token');
-            return null;
+            console.error('Logout API error:', error);
+            return rejectWithValue(error.message || 'Logout failed at API level');
         }
     }
 );
@@ -136,6 +135,7 @@ export const validateCurrentToken = createAsyncThunk(
             }
 
             const user = await authApi.getProfile();
+            // Повертаємо повний об'єкт користувача з токеном
             return {
                 user,
                 token
@@ -176,6 +176,10 @@ const authSlice = createSlice({
             state.isAuthenticated = false;
             state.error = null;
             localStorage.removeItem('token');
+        },
+        // НОВИЙ РЕДУКТОР: Оновлення даних користувача в стані Redux
+        setUser: (state, action) => {
+            state.user = action.payload;
         }
     },
     extraReducers: (builder) => {
@@ -187,7 +191,7 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.user = action.payload.user;
+                state.user = action.payload.user; // Встановлюємо повний об'єкт user
                 state.token = action.payload.token;
                 state.isAuthenticated = true;
                 state.error = null;
@@ -207,7 +211,7 @@ const authSlice = createSlice({
             })
             .addCase(registerUser.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.user = action.payload.user;
+                state.user = action.payload.user; // Встановлюємо повний об'єкт user
                 state.token = action.payload.token;
                 state.isAuthenticated = true;
                 state.error = null;
@@ -226,7 +230,7 @@ const authSlice = createSlice({
             })
             .addCase(validateCurrentToken.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.user = action.payload.user;
+                state.user = action.payload.user; // Встановлюємо повний об'єкт user
                 state.token = action.payload.token;
                 state.isAuthenticated = true;
                 state.error = null;
@@ -273,10 +277,16 @@ const authSlice = createSlice({
                 state.token = null;
                 state.isAuthenticated = false;
                 state.error = null;
+            })
+            .addCase(logoutUser.rejected, (state, action) => {
+                state.user = null;
+                state.token = null;
+                state.isAuthenticated = false;
+                state.error = action.payload as string;
             });
     },
 });
 
-// Export actions and reducer
-export const { clearError, setLoading, clearAuth } = authSlice.actions;
+// Експортуємо новий екшн setUser
+export const { clearError, setLoading, clearAuth, setUser } = authSlice.actions;
 export default authSlice.reducer;

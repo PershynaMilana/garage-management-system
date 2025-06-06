@@ -66,7 +66,11 @@ export const validateFullName = (name: string): string | undefined => {
     if (name.trim().length < 2) {
         return i18n.t('validation.fullName.minLength');
     }
-    if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
+    // Оновлено: Регулярний вираз тепер включає кириличні літери (український алфавіт)
+    // та прапор 'u' для коректної роботи з Unicode.
+    // Додано також дефіс і апостроф, якщо вони можуть бути частиною імені.
+    const nameRegex = /^[a-zA-Zа-яА-ЯіІїЇєЄґҐ\s'-]+$/u;
+    if (!nameRegex.test(name.trim())) {
         return i18n.t('validation.fullName.invalid');
     }
     return undefined;

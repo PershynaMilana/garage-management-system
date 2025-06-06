@@ -1,22 +1,27 @@
-import React, {useState, useRef, useCallback} from 'react';
-import {useTranslation} from 'react-i18next';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import PageLayout from '../../components/layout/PageLayout.tsx';
-import {validateEmail, validateFullName, validateStrongPassword} from '../../utils/validation';
-import {authApi} from '../../api/authApi';
+import { validateEmail, validateFullName, validateStrongPassword } from '../../utils/validation';
+import { authApi } from '../../api/authApi';
 import PhotoUploadModal from "../../components/modals/PhotoUploadModal.tsx";
 import AccountModal from "../../components/modals/AccountModal.tsx";
-import {ThemeSettings} from "../../contexts";
+import { ThemeSettings } from "../../contexts";
 import useTheme from "../../hooks/useTheme.ts";
-
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../../store/store';
+import { User } from '../../types/auth';
+import { validateCurrentToken, setUser } from '../../store/authSlice'; // Імпортуємо setUser для оновлення стану
 
 interface SettingsPageProps { }
 
 const SettingsPage: React.FC<SettingsPageProps> = () => {
-    const {i18n, t} = useTranslation();
+    const { i18n, t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const dispatch = useDispatch<AppDispatch>();
+    const { user: reduxUser, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
 
-    const [activeTab, setActiveTab] = useState<'general' | 'account' | 'theme'>('general');
-    const {settings, updateTheme, updateFontSize, updateBackground} = useTheme();
+    const [activeTab, setActiveTab] = useState<'general' | 'account' | 'theme'>('account');
+    const { settings, updateTheme, updateFontSize, updateBackground } = useTheme();
     const [timeFormat, setTimeFormat] = useState('12h');
     const [language, setLanguage] = useState(i18n.language);
     const [notifications, setNotifications] = useState(true);
@@ -27,30 +32,52 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
     const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
+    // Виправлено: Додано newPhoneNumber до початкового стану
     const [profileData, setProfileData] = useState({
-        name: 'Name',
+        name: reduxUser?.fullName || 'Name',
         newName: '',
         password: '********',
         newPassword: '',
-        email: 'email@gmail.com',
-        newEmail: ''
+        email: reduxUser?.email || 'email@gmail.com',
+        newEmail: '',
+        phoneNumber: reduxUser?.phoneNumber || '',
+        newPhoneNumber: '' // Додано нове поле
     });
 
     const [validationErrors, setValidationErrors] = useState({
         newName: '',
         newEmail: '',
-        newPassword: ''
+        newPassword: '',
+        newPhoneNumber: ''
     });
 
     const [isLoading, setIsLoading] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+    // useEffect для завантаження даних профілю та ініціалізації полів
+    useEffect(() => {
+        if (reduxUser) {
+            setProfileData(prev => ({
+                ...prev,
+                name: reduxUser.fullName,
+                email: reduxUser.email,
+                phoneNumber: reduxUser.phoneNumber || '',
+                // newName, newEmail, newPassword, newPhoneNumber залишаються порожніми для введення нових значень
+            }));
+            if (reduxUser.photoUrl) {
+                setPhotoPreview(reduxUser.photoUrl);
+            } else {
+                setPhotoPreview(null);
+            }
+        }
+    }, [reduxUser]); // Залежність тільки від reduxUser
 
     const handleLanguageChange = (newLang: string) => {
         setLanguage(newLang);
         i18n.changeLanguage(newLang);
 
         setTimeout(() => {
-            const {newName, newEmail, newPassword} = profileData;
+            const { newName, newEmail, newPassword, newPhoneNumber } = profileData;
             if (validationErrors.newName && newName.trim()) {
                 setValidationErrors(prev => ({
                     ...prev,
@@ -69,9 +96,14 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                     newPassword: validateStrongPassword(newPassword) || ''
                 }));
             }
+            if (validationErrors.newPhoneNumber && newPhoneNumber.trim()) {
+                setValidationErrors(prev => ({
+                    ...prev,
+                    newPhoneNumber: validateField('newPhoneNumber', newPhoneNumber) || ''
+                }));
+            }
         }, 100);
     };
-
 
     const validateField = useCallback((field: string, value: string) => {
         switch (field) {
@@ -81,10 +113,13 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                 return validateEmail(value);
             case 'newPassword':
                 return validateStrongPassword(value);
+            case 'newPhoneNumber':
+                // Додайте більш детальну валідацію номера телефону, якщо потрібно
+                return value.trim() === '' ? t('validation.phoneNumberRequired') : undefined;
             default:
                 return undefined;
         }
-    }, []);
+    }, [t]);
 
     const handleFieldChange = useCallback((field: string, value: string) => {
         setProfileData(prev => ({
@@ -115,9 +150,10 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
     }, [validateField]);
 
     const isFormValid = useCallback(() => {
-        const {newName, newEmail, newPassword} = profileData;
+        const { newName, newEmail, newPassword, newPhoneNumber } = profileData;
 
-        if (!newName.trim() && !newEmail.trim() && !newPassword.trim()) {
+        const hasInput = newName.trim() || newEmail.trim() || newPassword.trim() || newPhoneNumber.trim();
+        if (!hasInput) {
             return false;
         }
 
@@ -126,10 +162,11 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
 
         if (newName.trim() && validateFullName(newName)) return false;
         if (newEmail.trim() && validateEmail(newEmail)) return false;
-        return !(newPassword.trim() && validateStrongPassword(newPassword));
+        if (newPassword.trim() && validateStrongPassword(newPassword)) return false;
+        if (newPhoneNumber.trim() && validateField('newPhoneNumber', newPhoneNumber)) return false;
 
-
-    }, [profileData, validationErrors]);
+        return true;
+    }, [profileData, validationErrors, validateField]);
 
     const handleSaveProfile = async () => {
         setIsLoading(true);
@@ -138,28 +175,39 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
             const updateData = {
                 newName: profileData.newName.trim() || undefined,
                 newEmail: profileData.newEmail.trim() || undefined,
-                newPassword: profileData.newPassword.trim() || undefined
+                newPassword: profileData.newPassword.trim() || undefined,
+                newPhoneNumber: profileData.newPhoneNumber.trim() || undefined // Використовуємо newPhoneNumber
             };
 
             await authApi.updateProfile(updateData);
 
+            // Виправлено: Викликаємо validateCurrentToken для оновлення стану користувача в Redux
+            const updatedUser = await dispatch(validateCurrentToken()).unwrap();
+            
+            // Оновлюємо локальний стан profileData на основі оновлених даних з Redux
             setProfileData(prev => ({
                 ...prev,
+                name: updatedUser.user.fullName,
+                email: updatedUser.user.email,
+                phoneNumber: updatedUser.user.phoneNumber || '',
                 newName: '',
                 newEmail: '',
-                newPassword: ''
+                newPassword: '',
+                newPhoneNumber: '' // Очищаємо поле newPhoneNumber
             }));
 
             setValidationErrors({
                 newName: '',
                 newEmail: '',
-                newPassword: ''
+                newPassword: '',
+                newPhoneNumber: ''
             });
 
             console.log('Profile updated successfully');
 
         } catch (error: any) {
             console.error('Failed to update profile:', error.message);
+            // Можна додати локальне повідомлення про помилку
         } finally {
             setIsLoading(false);
         }
@@ -171,9 +219,16 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
         setUploadingPhoto(true);
 
         try {
-            await authApi.uploadProfilePhoto(selectedPhoto);
+            const response = await authApi.uploadProfilePhoto(selectedPhoto);
 
             console.log('Photo uploaded successfully');
+            if (response.photoUrl) {
+                setPhotoPreview(response.photoUrl);
+            }
+
+            // Виправлено: Викликаємо validateCurrentToken для оновлення стану користувача в Redux
+            // Це оновить photoUrl в Redux state
+            await dispatch(validateCurrentToken()).unwrap();
 
             setShowPhotoModal(false);
         } catch (error: any) {
@@ -321,30 +376,41 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
 
                         {/* Account fields */}
                         {[
-                            {label: t('settings.name'), key: 'name', type: 'text', readOnly: true},
+                            { label: t('settings.name'), key: 'name', type: 'text', readOnly: true, value: profileData.name },
                             {
                                 label: t('settings.newName'),
                                 key: 'newName',
                                 type: 'text',
-                                placeholder: t('settings.enterNewName')
+                                placeholder: t('settings.enterNewName'),
+                                value: profileData.newName
                             },
-                            {label: t('settings.password'), key: 'password', type: 'password', readOnly: true},
-                            {
-                                label: t('settings.newPassword'),
-                                key: 'newPassword',
-                                type: 'password',
-                                placeholder: t('settings.enterNewPassword')
-                            },
-                            {label: t('settings.email'), key: 'email', type: 'email', readOnly: true},
+                            { label: t('settings.email'), key: 'email', type: 'email', readOnly: true, value: profileData.email },
                             {
                                 label: t('settings.changeEmail'),
                                 key: 'newEmail',
                                 type: 'email',
-                                placeholder: t('settings.enterNewEmail')
+                                placeholder: t('settings.enterNewEmail'),
+                                value: profileData.newEmail
+                            },
+                            { label: t('settings.phoneNumber'), key: 'phoneNumber', type: 'text', readOnly: true, value: profileData.phoneNumber },
+                            {
+                                label: t('settings.newPhoneNumber'),
+                                key: 'newPhoneNumber',
+                                type: 'text',
+                                placeholder: t('settings.enterNewPhoneNumber'),
+                                value: profileData.newPhoneNumber
+                            },
+                            { label: t('settings.password'), key: 'password', type: 'password', readOnly: true, value: profileData.password },
+                            {
+                                label: t('settings.newPassword'),
+                                key: 'newPassword',
+                                type: 'password',
+                                placeholder: t('settings.enterNewPassword'),
+                                value: profileData.newPassword
                             }
                         ].map((field, index) => (
                             <div key={field.key} className={`py-4 gap-2 sm:gap-0 ${
-                                index < 5 ? 'border-b border-[#4e6b8c]/20' : ''
+                                index < 7 ? 'border-b border-[#4e6b8c]/20' : ''
                             }`}>
                                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                                     <span
@@ -352,7 +418,12 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                                     <div className="w-full sm:w-auto sm:min-w-[200px]">
                                         <input
                                             type={field.type}
-                                            value={profileData[field.key as keyof typeof profileData]}
+                                            // Виправлено: Правильний доступ до значення для readOnly та editable полів
+                                            value={
+                                                field.readOnly
+                                                    ? field.value
+                                                    : profileData[field.key as keyof typeof profileData]
+                                            }
                                             onChange={field.readOnly ? undefined : (e) => handleFieldChange(field.key, e.target.value)}
                                             onBlur={field.readOnly ? undefined : (e) => handleFieldBlur(field.key, e.target.value)}
                                             placeholder={field.placeholder}
@@ -395,9 +466,9 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                         {/* Theme */}
                         <div
                             className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 border-b border-theme gap-2 sm:gap-0">
-                <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
-                    {t('settings.theme')}
-                </span>
+                            <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
+                                {t('settings.theme')}
+                            </span>
                             <select
                                 value={settings.theme}
                                 onChange={(e) => updateTheme(e.target.value as ThemeSettings['theme'])}
@@ -418,9 +489,9 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                         {/* Background */}
                         <div
                             className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 border-b border-theme gap-2 sm:gap-0">
-                <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
-                    {t('settings.background')}
-                </span>
+                            <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
+                                {t('settings.background')}
+                            </span>
                             <select
                                 value={settings.background}
                                 onChange={(e) => updateBackground(e.target.value as ThemeSettings['background'])}
@@ -438,9 +509,9 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                         {/* Font Size */}
                         <div
                             className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 gap-2 sm:gap-0">
-                <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
-                    {t('settings.font')}
-                </span>
+                            <span className="text-responsive-base font-[Ubuntu-Regular] text-theme-primary">
+                                {t('settings.font')}
+                            </span>
                             <select
                                 value={settings.fontSize}
                                 onChange={(e) => updateFontSize(e.target.value as ThemeSettings['fontSize'])}
@@ -489,9 +560,9 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                         <div className="md:hidden border-b border-[#4e6b8c]/30">
                             <div className="flex">
                                 {[
-                                    {key: 'general', label: t('settings.general')},
-                                    {key: 'account', label: t('settings.account')},
-                                    {key: 'theme', label: t('settings.theme')}
+                                    { key: 'general', label: t('settings.general') },
+                                    { key: 'account', label: t('settings.account') },
+                                    { key: 'theme', label: t('settings.theme') }
                                 ].map(tab => (
                                     <button
                                         key={tab.key}
@@ -515,9 +586,9 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                                 <div className="p-6">
                                     <nav className="space-y-2">
                                         {[
-                                            {key: 'general', label: t('settings.general')},
-                                            {key: 'account', label: t('settings.account')},
-                                            {key: 'theme', label: t('settings.theme')}
+                                            { key: 'general', label: t('settings.general') },
+                                            { key: 'account', label: t('settings.account') },
+                                            { key: 'theme', label: t('settings.theme') }
                                         ].map(tab => (
                                             <button
                                                 key={tab.key}
@@ -564,7 +635,7 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
                     selectedPhoto={selectedPhoto}
                     photoPreview={photoPreview}
                     isDragOver={isDragOver}
-                    fileInputRef={fileInputRef}
+                    fileInputRef={fileInputRef} // Тепер тип RefObject<HTMLInputElement | null>
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}

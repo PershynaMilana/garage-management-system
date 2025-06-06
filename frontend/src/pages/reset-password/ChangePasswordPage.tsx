@@ -1,92 +1,148 @@
-import React, { useActionState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAppDispatch } from '../../store/hooks';
-import { useAuth } from '../../store/hooks';
-import { clearError } from '../../store/authSlice';
-import PageLayout from '../../components/layout/PageLayout.tsx';
-import FormInput from '../../components/forms/FormInput';
-import FormHeader from '../../components/forms/FormHeader';
-import { FormContainer, ErrorMessage, SuccessMessage, SubmitButton } from '../../components/forms/FormContainer';
-import { createChangePasswordAction, initialChangePasswordState } from '../../lib/authActions';
+import { changePassword, clearError } from '../../store/authSlice'; // Імпортуємо action
+import { RootState, AppDispatch } from '../../store/store'; // Імпортуємо RootState та AppDispatch
+import { ChangePasswordRequest } from '../../types/auth'; // Імпортуємо оновлений тип
 
-interface ChangePasswordPageProps {}
-
-const ChangePasswordPage: React.FC<ChangePasswordPageProps> = () => {
-    const { t } = useTranslation();
-    const dispatch = useAppDispatch();
+const ChangePasswordPage: React.FC = () => {
+    const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
-    const { isLoading, error } = useAuth();
+    const { isLoading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
-    // Cleanup auth errors on unmounting
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [localError, setLocalError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
     useEffect(() => {
-        return () => {
-            dispatch(clearError());
-        };
+        // Очищаємо Redux помилку при завантаженні компонента
+        dispatch(clearError());
+        setLocalError(null);
+        setSuccessMessage(null);
     }, [dispatch]);
 
-    // Create change password action
-    const changePasswordAction = createChangePasswordAction(dispatch, navigate);
-    const [state, formAction, isPending] = useActionState(changePasswordAction, initialChangePasswordState);
+    // Перенаправляємо, якщо користувач не автентифікований (якщо це сторінка зміни пароля для увійшовшого користувача)
+    // Або якщо це сторінка скидання пароля, то логіка може бути іншою (наприклад, перевірка токена з URL)
+    useEffect(() => {
+        if (!isAuthenticated && !isLoading) {
+            // Якщо це сторінка зміни пароля для увійшовшого користувача,
+            // і він не автентифікований, перенаправляємо на логін.
+            // Якщо це сторінка скидання пароля (після "забув пароль"),
+            // то тут має бути логіка перевірки resetToken з URL.
+            // Наразі ми припускаємо, що це для увійшовшого користувача.
+            // navigate('/login');
+        }
+    }, [isAuthenticated, isLoading, navigate]);
+
+    useEffect(() => {
+        if (error) {
+            setLocalError(error);
+        } else {
+            setLocalError(null);
+        }
+    }, [error]);
+
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLocalError(null);
+        setSuccessMessage(null);
+        dispatch(clearError());
+
+        if (newPassword !== confirmNewPassword) {
+            setLocalError('Новий пароль та підтвердження не співпадають.');
+            return;
+        }
+        if (newPassword.length < 6) { // Приклад простої валідації
+            setLocalError('Новий пароль має бути не менше 6 символів.');
+            return;
+        }
+
+        const changePasswordData: ChangePasswordRequest = {
+            oldPassword,
+            newPassword,
+        };
+
+        try {
+            const resultAction = await dispatch(changePassword(changePasswordData)).unwrap();
+            setSuccessMessage(resultAction.message || 'Пароль успішно змінено!');
+            setOldPassword('');
+            setNewPassword('');
+            setConfirmNewPassword('');
+            // Можливо, перенаправити користувача або показати модальне вікно
+            // navigate('/settings'); // Приклад перенаправлення
+        } catch (err: any) {
+            setLocalError(err || 'Не вдалося змінити пароль.');
+        }
+    };
 
     return (
-        <PageLayout>
-            <div className="relative overflow-hidden">
-                {/* Main Content */}
-                <div className="xl:mt-[10vh] sm:mt-[10vh] relative z-10 flex items-center justify-center p-4">
-                    <div className="w-full max-w-md">
-
-                        <FormHeader
-                            title={t('auth.changePassword.title')}
-                            subtitle={t('auth.changePassword.subtitle')}
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Змінити пароль</h2>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label htmlFor="oldPassword" className="block text-gray-700 text-sm font-bold mb-2">
+                            Старий пароль
+                        </label>
+                        <input
+                            type="password"
+                            id="oldPassword"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            required
+                            disabled={isLoading}
                         />
-
-                        <FormContainer>
-                            {/* Global Error */}
-                            {(error || state.errors.general) && (
-                                <ErrorMessage message={error || state.errors.general!} />
-                            )}
-
-                            {/* Success message */}
-                            {state.success && (
-                                <SuccessMessage message={t('auth.changePassword.successMessage')} />
-                            )}
-
-                            {/* Form with React 19 action - noValidate отключает HTML валидацию */}
-                            <form action={formAction} className="space-y-6" noValidate>
-                                <FormInput
-                                    id="code"
-                                    name="code"
-                                    label={t('auth.changePassword.verificationCode')}
-                                    type="text"
-                                    placeholder={t('auth.changePassword.codePlaceholder')}
-                                    error={state.errors.code}
-                                    disabled={isPending || isLoading || state.success}
-                                />
-
-                                <FormInput
-                                    id="newPassword"
-                                    name="newPassword"
-                                    label={t('auth.changePassword.newPassword')}
-                                    type="password"
-                                    placeholder={t('auth.changePassword.passwordPlaceholder')}
-                                    error={state.errors.newPassword}
-                                    disabled={isPending || isLoading || state.success}
-                                />
-
-                                <SubmitButton
-                                    isLoading={isPending || isLoading}
-                                    disabled={state.success}
-                                    loadingText={t('auth.changePassword.loadingText')}
-                                >
-                                    {state.success ? t('auth.changePassword.successButton') : t('auth.changePassword.submitButton')}
-                                </SubmitButton>
-                            </form>
-                        </FormContainer>
                     </div>
-                </div>
+                    <div className="mb-4">
+                        <label htmlFor="newPassword" className="block text-gray-700 text-sm font-bold mb-2">
+                            Новий пароль
+                        </label>
+                        <input
+                            type="password"
+                            id="newPassword"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            required
+                            disabled={isLoading}
+                        />
+                    </div>
+                    <div className="mb-6">
+                        <label htmlFor="confirmNewPassword" className="block text-gray-700 text-sm font-bold mb-2">
+                            Підтвердіть новий пароль
+                        </label>
+                        <input
+                            type="password"
+                            id="confirmNewPassword"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+                            value={confirmNewPassword}
+                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            required
+                            disabled={isLoading}
+                        />
+                    </div>
+                    {localError && (
+                        <p className="text-red-500 text-xs italic mb-4 text-center">{localError}</p>
+                    )}
+                    {successMessage && (
+                        <p className="text-green-500 text-xs italic mb-4 text-center">{successMessage}</p>
+                    )}
+                    <div className="flex items-center justify-between">
+                        <button
+                            type="submit"
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Зміна...' : 'Змінити пароль'}
+                        </button>
+                    </div>
+                </form>
             </div>
-        </PageLayout>
+        </div>
     );
 };
 

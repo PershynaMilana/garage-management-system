@@ -67,7 +67,7 @@ export const authApi = {
 
             return {
                 user: {
-                    id: responseData.user?.id || 'unknown',
+                    id: responseData.user?.userId || 'unknown',
                     email: data.email,
                     fullName: responseData.user?.name || 'User',
                     phoneNumber: responseData.user?.phone || ''
@@ -127,13 +127,19 @@ export const authApi = {
         logRequest('POST', url, data);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(data),
+            });
+
+            await handleApiError(response);
+            const responseData = await response.json();
             const duration = Date.now() - startTime;
 
-            const response = { message: 'Password reset code sent to your email' };
-            logResponse('POST', url, response, duration);
+            logResponse('POST', url, responseData, duration);
 
-            return response;
+            return responseData;
         } catch (error: any) {
             const duration = Date.now() - startTime;
             logError('POST', url, error, duration);
@@ -148,17 +154,19 @@ export const authApi = {
         logRequest('POST', url, data);
 
         try {
-            if (data.code !== '693415') {
-                throw new Error('Invalid verification code');
-            }
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data),
+            });
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await handleApiError(response);
+            const responseData = await response.json();
             const duration = Date.now() - startTime;
 
-            const response = { message: 'Password changed successfully' };
-            logResponse('POST', url, response, duration);
+            logResponse('POST', url, responseData, duration);
 
-            return response;
+            return responseData;
         } catch (error: any) {
             const duration = Date.now() - startTime;
             logError('POST', url, error, duration);
@@ -166,20 +174,28 @@ export const authApi = {
         }
     },
 
-    logout: async (): Promise<void> => {
+    logout: async (): Promise<{ message: string }> => { 
         const url = `${API_BASE_URL}/auth/logout`;
         const startTime = Date.now();
 
         logRequest('POST', url);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 500));
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+            });
+
+            await handleApiError(response);
+            const responseData = await response.json(); 
             const duration = Date.now() - startTime;
 
-            logResponse('POST', url, { message: 'Logged out successfully' }, duration);
+            logResponse('POST', url, responseData, duration);
+            return responseData;
         } catch (error: any) {
             const duration = Date.now() - startTime;
             logError('POST', url, error, duration);
+            throw error;
         }
     },
 
@@ -202,10 +218,11 @@ export const authApi = {
             logResponse('GET', url, responseData, duration);
 
             return {
-                id: responseData.id || 'unknown',
+                id: responseData.userId || 'unknown',
                 email: responseData.email || '',
                 fullName: responseData.name || 'User',
-                phoneNumber: responseData.phone || ''
+                phoneNumber: responseData.phone || '',
+                photoUrl: responseData.photoUrl || undefined
             };
         } catch (error: any) {
             const duration = Date.now() - startTime;
@@ -218,6 +235,7 @@ export const authApi = {
         newName?: string;
         newEmail?: string;
         newPassword?: string;
+        newPhoneNumber?: string;
     }): Promise<{ message: string }> => {
         const url = `${API_BASE_URL}/auth/profile`;
         const startTime = Date.now();
@@ -226,6 +244,7 @@ export const authApi = {
         if (data.newName?.trim()) updateData.name = data.newName.trim();
         if (data.newEmail?.trim()) updateData.email = data.newEmail.trim();
         if (data.newPassword?.trim()) updateData.password = data.newPassword.trim();
+        if (data.newPhoneNumber?.trim()) updateData.phone = data.newPhoneNumber.trim();
 
         logRequest('PUT', url, updateData);
 

@@ -27,6 +27,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
         return 'bg-[#87d7de]/20 text-[#87d7de] border-[#87d7de]/30';
       case 'Admin':
         return 'bg-red-500/20 text-red-300 border-red-500/30';
+      case 'Default member': // Додано для повноти
       default:
         return 'bg-[#4e6b8c]/20 text-white border-[#4e6b8c]/30';
     }
@@ -36,12 +37,12 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
     <>
       {/* Desktop View */}
       <div
-        className="hidden md:grid grid-cols-5 gap-4 p-4 border-b border-[#4e6b8c]/20 hover:bg-[#4e6b8c]/20 cursor-pointer transition-colors"
+        className="hidden md:grid grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-4 p-4 border-b border-[#4e6b8c]/20 hover:bg-[#4e6b8c]/20 cursor-pointer transition-colors"
         onClick={onClick}
       >
         <div className="flex items-center gap-3">
           <img
-            src={user.avatar}
+            src={user.photoUrl || user.avatar || 'https://placehold.co/40x40/4e6b8c/ffffff?text=U'} // Заглушка
             alt={user.name}
             className="w-10 h-10 rounded-full object-cover"
           />
@@ -50,12 +51,13 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
         
         <div className="flex items-center text-white/70 font-[Ubuntu-Regular]">{user.email}</div>
         
-        <div className="flex items-center text-white/70 font-[Ubuntu-Regular]">{user.garageNumber}</div>
+        {/* ДОДАНО: Колонка для номера гаража в Desktop View */}
+        <div className="flex items-center text-white/70 font-[Ubuntu-Regular]">{user.garageNumber || 'N/A'}</div>
         
         <div className="flex items-center">
           <select
             value={user.role}
-            onChange={(e) => onRoleChange(user.id, e.target.value as User['role'])}
+            onChange={(e) => onRoleChange(user.userId, e.target.value as User['role'])} 
             onClick={(e) => e.stopPropagation()}
             className={`bg-[#4e6b8c]/50 border rounded-lg px-3 py-1 text-sm font-[Ubuntu-Regular] focus:outline-none focus:border-[#87d7de] ${getRoleBadgeColor(user.role)}`}
           >
@@ -78,7 +80,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <img
-              src={user.avatar}
+              src={user.photoUrl || user.avatar || 'https://placehold.co/48x48/4e6b8c/ffffff?text=U'} // Заглушка
               alt={user.name}
               className="w-12 h-12 rounded-full object-cover"
             />
@@ -97,10 +99,13 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
             <span className="text-white/70 font-[Ubuntu-Regular]">{user.email}</span>
           </div>
           
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="w-4 h-4 text-[#87d7de]" />
-            <span className="text-white/70 font-[Ubuntu-Regular]">Garage: {user.garageNumber}</span>
-          </div>
+          {/* ДОДАНО: Колонка для номера гаража в Mobile View */}
+          {user.garageNumber && ( // Рендеримо, якщо є номер гаража
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin className="w-4 h-4 text-[#87d7de]" />
+              <span className="text-white/70 font-[Ubuntu-Regular]">Гараж: {user.garageNumber}</span> {/* Змінено на українську мову */}
+            </div>
+          )}
           
           <div className="flex items-center gap-2 text-sm">
             <CreditCard className="w-4 h-4 text-[#87d7de]" />

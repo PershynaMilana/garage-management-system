@@ -1,32 +1,35 @@
-import React from "react";
+import React, { useEffect } from 'react'; 
 import { useTranslation } from 'react-i18next';
-import { User } from "../../types/user";
+import { User, UserRole, PaginationProps } from '../../types/user';
 import UserTableHeader from "./UserTableHeader";
 import UserTableRow from "./UserTableRow";
 import Pagination from "./Pagination";
 
-interface UserTableProps {
+interface UserTableProps extends PaginationProps {
     users: User[];
     onUserClick: (user: User) => void;
     onRoleChange: (userId: number, role: User["role"]) => void;
-    currentPage: number;
-    totalPages: number;
-    itemsPerPage: number;
-    onPageChange: (page: number) => void;
-    onItemsPerPageChange: (items: number) => void;
+
 }
 
 const UserTable: React.FC<UserTableProps> = ({
-                                                 users,
-                                                 onUserClick,
-                                                 onRoleChange,
-                                                 currentPage,
-                                                 totalPages,
-                                                 itemsPerPage,
-                                                 onPageChange,
-                                                 onItemsPerPageChange,
-                                             }) => {
+    users,
+    onUserClick,
+    onRoleChange,
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    onPageChange,
+    onItemsPerPageChange,
+}) => {
     const { t } = useTranslation();
+
+    useEffect(() => {
+        console.log("UserTable received users (current page data):", users.length, "Expected itemsPerPage (limit from Redux):", itemsPerPage);
+        console.log("Current Page:", currentPage, "Total Pages:", totalPages);
+        console.log("Pagination props - currentPage:", currentPage, "totalPages:", totalPages, "itemsPerPage:", itemsPerPage);
+    }, [users, itemsPerPage, currentPage, totalPages]);
+
 
     return (
         <div className="bg-[#2a3f5f]/50 backdrop-blur-sm rounded-lg border border-[#4e6b8c]/30 overflow-hidden">
@@ -40,7 +43,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 ) : (
                     users.map((user) => (
                         <UserTableRow
-                            key={user.id}
+                            key={user.userId}
                             user={user}
                             onClick={() => onUserClick(user)}
                             onRoleChange={onRoleChange}
@@ -49,6 +52,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 )}
             </div>
 
+            {/* Pagination component. Ensure it uses currentPage, totalPages, itemsPerPage */}
             <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

@@ -4,6 +4,7 @@
 
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
+import userReducer from './userSlice'; // Імпортуємо наш новий редюсер користувачів
 
 /**
  * Main Redux store configuration
@@ -12,6 +13,7 @@ import authReducer from './authSlice';
 export const store = configureStore({
     reducer: {
         auth: authReducer,
+        users: userReducer, // Додаємо редюсер для управління станом користувачів
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

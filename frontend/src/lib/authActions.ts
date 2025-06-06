@@ -6,10 +6,10 @@
 import { AppDispatch } from '../store/store';
 import {
     validateEmail,
-    validatePassword,
+    validatePassword, // Використовуємо validatePassword для старого пароля
     validateStrongPassword,
     validateFullName,
-    validateCode,
+    validateCode, // Залишаємо validateCode, якщо він використовується в інших місцях, але не для changePassword
     validatePhoneNumber
 } from '../utils/validation';
 import { changePassword, forgotPassword, loginUser, registerUser } from "../store/authSlice";
@@ -47,7 +47,7 @@ export interface ForgotPasswordFormState {
 
 export interface ChangePasswordFormState {
     errors: {
-        code?: string;
+        oldPassword?: string; // Змінено з 'code' на 'oldPassword'
         newPassword?: string;
         general?: string;
     };
@@ -147,7 +147,8 @@ export const createRegisterAction = (dispatch: AppDispatch) => {
         const passwordError = validateStrongPassword(password);
         const phoneError = validatePhoneNumber(phoneNumber);
 
-        if (nameError || emailError || passwordError || phoneNumber) {
+        // Виправлено: Перевіряємо наявність помилок валідації, а не значення полів
+        if (nameError || emailError || passwordError || phoneError) {
             return {
                 errors: {
                     fullName: nameError,
@@ -246,25 +247,29 @@ export const createChangePasswordAction = (dispatch: AppDispatch, navigate: (pat
         _prevState: ChangePasswordFormState,
         formData: FormData
     ): Promise<ChangePasswordFormState> {
-        const code = formData.get('code') as string;
+        // Змінено: отримуємо oldPassword замість code
+        const oldPassword = formData.get('oldPassword') as string; 
         const newPassword = formData.get('newPassword') as string;
 
         // Validate form data
-        const codeError = validateCode(code);
-        const passwordError = validateStrongPassword(newPassword);
+        // Змінено: використовуємо validatePassword для oldPassword
+        const oldPasswordError = validatePassword(oldPassword); 
+        const newPasswordError = validateStrongPassword(newPassword); // Змінено назву змінної для ясності
 
-        if (codeError || passwordError) {
+        // Змінено: перевіряємо oldPasswordError замість codeError
+        if (oldPasswordError || newPasswordError) { 
             return {
                 errors: {
-                    code: codeError,
-                    newPassword: passwordError
+                    oldPassword: oldPasswordError, // Змінено з 'code' на 'oldPassword'
+                    newPassword: newPasswordError
                 },
                 success: false
             };
         }
 
         try {
-            const result = await dispatch(changePassword({ code, newPassword }));
+            // Змінено: передаємо oldPassword замість code
+            const result = await dispatch(changePassword({ oldPassword, newPassword })); 
 
             if (changePassword.fulfilled.match(result)) {
                 // Redirect to the login page after 3 seconds
@@ -274,7 +279,7 @@ export const createChangePasswordAction = (dispatch: AppDispatch, navigate: (pat
 
                 return { errors: {}, success: true };
             } else {
-                const errorMessage = result.payload as string || 'Failed to change password. Please check your code and try again.';
+                const errorMessage = result.payload as string || 'Failed to change password. Please check your credentials and try again.'; // Оновлено повідомлення
                 return {
                     errors: { general: errorMessage },
                     success: false

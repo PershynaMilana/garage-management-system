@@ -3,12 +3,12 @@ dotenv.config();
 
 import sql from 'mssql';
 
-const dbConfig: sql.config = {
+export const dbConfig: sql.config = {
   user: process.env.DB_USER || 'default_user',
   password: process.env.DB_PASSWORD || 'default_password',
   database: process.env.DB_NAME || 'default_db',
   server: process.env.DB_SERVER || 'localhost',
-  port: 1433, // <-- реальний порт з SQL Config
+  port: 1433, 
   options: {
     encrypt: false,
     trustServerCertificate: true

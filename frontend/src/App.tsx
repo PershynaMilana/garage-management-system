@@ -1,5 +1,9 @@
+import React, { useEffect } from 'react'; 
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./contexts";
+import { useDispatch } from 'react-redux'; 
+import { validateCurrentToken } from './store/authSlice'; 
+import { AppDispatch } from './store/store'; 
 
 import LoginPage from "./pages/auth/LoginPage.tsx";
 import RegisterPage from "./pages/auth/RegisterPage.tsx";
@@ -12,48 +16,48 @@ import StatisticsPage from "./pages/statistics/StatisticsPage.tsx";
 import TermsOfUsePage from "./pages/terms-of-use/TermsOfUsePage.tsx";
 import PrivacyPolicyPage from "./pages/privacy-policy/PrivacyPolicyPage.tsx";
 import CookiePolicyPage from "./pages/cookie-policy/CookiePolicyPage.tsx";
-import GarageManagementPage from "./pages/garage-managment/GarageManagementPage.tsx";
+import GarageManagementPage from "./pages/garage-managment/GarageManagementPage.tsx"; 
+
+import ProtectedRoute from './components/auth/ProtectedRoute'; 
 
 function App() {
-  return (
-    <>
-      <ThemeProvider>
-        <Routes>
-          <Route path="/" element={<Navigate to="/main-page" replace />} />
+    const dispatch = useDispatch<AppDispatch>();
 
-          {/* auth */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/change-password" element={<ChangePasswordPage />} />
+    useEffect(() => {
+        dispatch(validateCurrentToken());
+    }, [dispatch]);
 
-          {/* settings */}
-          <Route path="/settings" element={<SettingsPage />} />
+    return (
+        <>
+            <ThemeProvider>
+                <Routes>
+                    {/* Публічні маршрути (доступні всім) */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    {/* ChangePasswordPage може бути як публічною (для скидання за токеном), так і захищеною (для зміни пароля увійшовшого користувача) */}
+                    {/* Наразі ми залишаємо її публічною, оскільки вона може використовуватися для потоку "забув пароль" */}
+                    <Route path="/change-password" element={<ChangePasswordPage />} />
 
-          {/* main (users crud) */}
-          <Route path="/main-page" element={<MainPage />} />
+                    <Route path="/terms-of-use" element={<TermsOfUsePage />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                    <Route path="/cookie-policy" element={<CookiePolicyPage />} />
 
-          {/* statistics */}
-          <Route path="/statistics" element={<StatisticsPage />} />
+                    {/* Захищені маршрути (доступні лише автентифікованим користувачам) */}
+                    <Route element={<ProtectedRoute />}>
+                        <Route path="/" element={<Navigate to="/main-page" replace />} /> {/* Перенаправлення з кореня */}
+                        <Route path="/main-page" element={<MainPage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
+                        <Route path="/statistics" element={<StatisticsPage />} />
+                        <Route path="/garage-management" element={<GarageManagementPage />} /> {/* Додано захищений маршрут для GarageManagementPage */}
+                    </Route>
 
-          {/* terms of use */}
-          <Route path="/terms-of-use" element={<TermsOfUsePage />} />
-
-          {/* privacy policy */}
-          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-
-          {/* statistics */}
-          <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-
-          {/* garage-managment */}
-          <Route path="/garage-management" element={<GarageManagementPage />} />
-
-          {/* 404 */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </ThemeProvider>
-    </>
-  );
+                    {/* Маршрут 404 (завжди доступний) */}
+                    <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+            </ThemeProvider>
+        </>
+    );
 }
 
 export default App;
