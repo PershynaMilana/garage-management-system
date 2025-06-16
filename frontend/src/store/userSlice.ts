@@ -1,5 +1,3 @@
-// frontend/src/store/userSlice.ts
-
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { userApi } from '../api/userApi';
 import { User, UserListResponse, UserQueryParams, UserRole } from '../types/user';
@@ -32,7 +30,7 @@ const initialState: UserState = {
 
 export const fetchUsers = createAsyncThunk(
     'users/fetchUsers',
-    async (params: UserQueryParams, { getState, rejectWithValue }) => {
+    async (params: UserQueryParams, {rejectWithValue }) => {
         try {
             const response = await userApi.getAllUsers(params);
             return response;
@@ -80,7 +78,7 @@ const userSlice = createSlice({
         },
         updateUserRoleLocally: (state, action: PayloadAction<{ userId: number; newRole: UserRole }>) => {
             const { userId, newRole } = action.payload;
-            const user = state.users.find(u => u.userId === userId);
+            const user = state.users.find(u => u.id === userId);
             if (user) {
                 user.role = newRole;
             }
@@ -103,10 +101,10 @@ const userSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload as string;
             })
-            .addCase(updateUserRoleAsync.pending, (state) => {
+            .addCase(updateUserRoleAsync.pending, () => {
                 // Можна додати індикатор завантаження для конкретного оновлення
             })
-            .addCase(updateUserRoleAsync.fulfilled, (state, action) => {
+            .addCase(updateUserRoleAsync.fulfilled, () => {
                 // Оскільки ми перезавантажуємо fetchUsers у updateUserRoleAsync,
                 // тут можна просто відобразити успіх або нічого не робити
             })

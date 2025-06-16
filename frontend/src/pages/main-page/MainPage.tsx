@@ -23,7 +23,6 @@ const MainPage: React.FC = () => {
 
     const {
         users,
-        totalUsers,
         currentPage,
         totalPages,
         limit,
@@ -140,7 +139,7 @@ const MainPage: React.FC = () => {
     };
 
     const handleUserClick = (user: User) => {
-        dispatch(setSelectedUserId(user.userId));
+        dispatch(setSelectedUserId(user.id));
     };
 
     const handleCloseUserDetails = () => {
@@ -161,7 +160,7 @@ const MainPage: React.FC = () => {
     };
 
     const selectedUser = useMemo(() => {
-        return users.find(u => u.userId === selectedUserId) || null;
+        return users.find(u => u.id === selectedUserId) || null;
     }, [users, selectedUserId]);
 
     if (loading) {

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'; 
 import { useTranslation } from 'react-i18next';
-import { User, UserRole, PaginationProps } from '../../types/user';
+import { User, PaginationProps } from '../../types/user';
 import UserTableHeader from "./UserTableHeader";
 import UserTableRow from "./UserTableRow";
 import Pagination from "./Pagination";
@@ -43,7 +43,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 ) : (
                     users.map((user) => (
                         <UserTableRow
-                            key={user.userId}
+                            key={user.id}
                             user={user}
                             onClick={() => onUserClick(user)}
                             onRoleChange={onRoleChange}

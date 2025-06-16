@@ -9,9 +9,9 @@ import {
   faWarehouse, // Додано іконку для управління гаражем
 } from "@fortawesome/free-solid-svg-icons";
 import { library } from "@fortawesome/fontawesome-svg-core";
-import { useDispatch, useSelector } from 'react-redux'; // Імпортуємо useDispatch та useSelector
+import { useDispatch } from 'react-redux'; // Імпортуємо useDispatch та useSelector
 import { logoutUser } from '../store/authSlice'; // Виправлено: видалено .ts розширення
-import { AppDispatch, RootState } from '../store/store.ts'; // Виправлено: додано .ts розширення
+import { AppDispatch } from '../store/store.ts'; // Виправлено: додано .ts розширення
 
 // Додаємо всі необхідні іконки до бібліотеки FontAwesome
 library.add(
@@ -26,7 +26,6 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>(); // Отримуємо dispatch
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth); // Отримуємо стан автентифікації
 
   // Визначення елементів навігації
   const navigationItems = [

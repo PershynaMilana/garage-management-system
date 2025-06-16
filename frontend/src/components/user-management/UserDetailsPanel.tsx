@@ -56,7 +56,7 @@ const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({ user, onClose, onUp
   };
 
   const handleSaveRole = async () => {
-    await onUpdateRole(user.userId, editingRole);
+    await onUpdateRole(user.id, editingRole);
   };
 
   return (

@@ -1,5 +1,6 @@
 import React from "react";
-import { statisticsData, ChartPoint } from "../../data/StatisticsData.ts";
+import {ChartPoint, statisticsData} from "../../data/statisticsData.ts";
+
 
 interface ChartAreaProps {
   selectedPeriod: string;

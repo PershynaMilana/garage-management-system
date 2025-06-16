@@ -10,7 +10,6 @@ import {
     SignUpRequest,
     ForgotPasswordRequest,
     ChangePasswordRequest,
-    User // Імпортуємо інтерфейс User
 } from '../types/auth';
 
 /**

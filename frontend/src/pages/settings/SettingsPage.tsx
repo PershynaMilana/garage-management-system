@@ -9,8 +9,7 @@ import { ThemeSettings } from "../../contexts";
 import useTheme from "../../hooks/useTheme.ts";
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
-import { User } from '../../types/auth';
-import { validateCurrentToken, setUser } from '../../store/authSlice'; // Імпортуємо setUser для оновлення стану
+import { validateCurrentToken } from '../../store/authSlice'; // Імпортуємо setUser для оновлення стану
 
 interface SettingsPageProps { }
 
@@ -18,7 +17,7 @@ const SettingsPage: React.FC<SettingsPageProps> = () => {
     const { i18n, t } = useTranslation();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const dispatch = useDispatch<AppDispatch>();
-    const { user: reduxUser, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
+    const { user: reduxUser} = useSelector((state: RootState) => state.auth);
 
     const [activeTab, setActiveTab] = useState<'general' | 'account' | 'theme'>('account');
     const { settings, updateTheme, updateFontSize, updateBackground } = useTheme();

@@ -9,7 +9,6 @@ import {
     validatePassword, // Використовуємо validatePassword для старого пароля
     validateStrongPassword,
     validateFullName,
-    validateCode, // Залишаємо validateCode, якщо він використовується в інших місцях, але не для changePassword
     validatePhoneNumber
 } from '../utils/validation';
 import { changePassword, forgotPassword, loginUser, registerUser } from "../store/authSlice";

@@ -57,7 +57,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
         <div className="flex items-center">
           <select
             value={user.role}
-            onChange={(e) => onRoleChange(user.userId, e.target.value as User['role'])} 
+            onChange={(e) => onRoleChange(user.id, e.target.value as User['role'])}
             onClick={(e) => e.stopPropagation()}
             className={`bg-[#4e6b8c]/50 border rounded-lg px-3 py-1 text-sm font-[Ubuntu-Regular] focus:outline-none focus:border-[#87d7de] ${getRoleBadgeColor(user.role)}`}
           >

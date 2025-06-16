@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from 'react-i18next';
-import { statisticsData } from "../../data/StatisticsData.ts";
+import {statisticsData} from "../../data/statisticsData.ts";
 
 interface StatisticsChartProps {
   selectedPeriod: string;

@@ -133,7 +133,7 @@ const GarageDetailsModal: React.FC<GarageDetailsModalProps> = ({
                           className="text-[#22d3ee] w-4"
                       />
                       <span>
-                    {t('garageManagement.modal.lastActivity')}: {formatDate(user.lastActivity)}
+                    {t('garageManagement.modal.lastActivity')}: {formatDate(user.lastActivity || "")}
                   </span>
                     </div>
 

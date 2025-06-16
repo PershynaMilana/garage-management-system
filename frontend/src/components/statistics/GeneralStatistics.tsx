@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from 'react-i18next';
 import StatCard from "./StatCard.tsx";
 import PeriodSelector from "./PeriodSelector.tsx";
-import { statisticsData } from "../../data/StatisticsData.ts";
+import {statisticsData} from "../../data/statisticsData.ts";
 
 interface GeneralStatisticsProps {
   selectedPeriod: string;

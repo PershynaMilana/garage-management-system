@@ -6,13 +6,12 @@ export type UserRole = 'Default member' | 'Manager' | 'Admin';
 // Інтерфейс для основного об'єкта користувача
 // Об'єднано ваші існуючі поля з тими, що повертає бекенд
 export interface User {
-    userId: number; // Використовуємо userId, як на бекенді
-    id?: number; // Можливо, id є просто псевдонімом або використовується локально
+    id: number; // Використовуємо userId, як на бекенді
     name: string;
     email: string;
     phone?: string;
     registrationDate: string; // Формат дати, як з бекенду
-    userStatus: string; // Нове поле з бекенду
+    userStatus?: string; // Нове поле з бекенду
     photoUrl?: string; // З бекенду (відповідає вашому 'avatar')
     avatar?: string; // Ваше існуюче поле, якщо воно відрізняється від photoUrl
     role: UserRole;
