@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken';
 import { connectToDb } from '../config/db';
 import { User } from '../models/user.model';
 import crypto from 'crypto'; 
+import { NotificationService } from './notification.service';
+
+const notificationService = new NotificationService();
 
 const getUserByEmail = async (email: string): Promise<User | null> => {
     try {
@@ -190,29 +193,87 @@ export const loginUser = async (
 };
 
 export const changePassword = async (
-    userId: number,
-    oldPassword: string,
-    newPassword: string
+  userId: number,
+  oldPassword: string,
+  newPassword: string
 ) => {
-    const pool = await connectToDb();
-    const req = pool.request();
-    req.input('userId', sql.Int, userId);
-    const result = await req.query(`SELECT passwordHash FROM Users WHERE userId = @userId`);
-    const user = result.recordset[0];
-    if (!user) throw new Error('User not found');
+  const pool = await connectToDb();
+  const req = pool.request();
+  req.input('userId', sql.Int, userId);
+  const result = await req.query(`SELECT passwordHash FROM Users WHERE userId = @userId`);
+  const user = result.recordset[0];
+  if (!user) throw new Error('User not found');
 
-    const ok = await bcrypt.compare(oldPassword, user.passwordHash);
-    if (!ok) throw new Error('Old password is incorrect');
+  const ok = await bcrypt.compare(oldPassword, user.passwordHash);
+  if (!ok) throw new Error('Old password is incorrect');
 
-    const newHash = await bcrypt.hash(newPassword, 10);
-    const upd = pool.request();
-    upd.input('userId', sql.Int, userId);
-    upd.input('newHash', sql.NVarChar, newHash);
-    await upd.query(`
-        UPDATE Users 
-        SET passwordHash = @newHash 
-        WHERE userId = @userId
-    `);
+  const newHash = await bcrypt.hash(newPassword, 10);
+  const confirmationToken = crypto.randomBytes(32).toString('hex');
+  const confirmationExpires = new Date(Date.now() + 3600000); // 1 година
 
-    return true;
+  const upd = pool.request();
+  upd.input('userId', sql.Int, userId);
+  upd.input('newHash', sql.NVarChar, newHash);
+  upd.input('confirmationToken', sql.NVarChar, confirmationToken);
+  upd.input('confirmationExpires', sql.DateTime, confirmationExpires);
+  await upd.query(`
+    UPDATE Users 
+    SET passwordHash = @newHash,
+        resetPasswordToken = @confirmationToken,
+        resetPasswordExpires = @confirmationExpires
+    WHERE userId = @userId
+  `);
+
+  // Автоматичне підтвердження
+  const confirmationSuccess = await confirmPasswordChange(confirmationToken);
+  if (!confirmationSuccess) {
+    throw new Error('Failed to confirm password change automatically');
+  }
+
+  // Email як опціональне сповіщення (не для підтвердження)
+  const confirmationUrl = `http://localhost:3000/api/auth/confirm-password?token=${confirmationToken}`;
+  const html = notificationService.generateConfirmationEmail(confirmationUrl);
+  await notificationService.sendNotification({
+    userId,
+    subject: 'Password Change Confirmation',
+    html,
+  });
+
+  return true;
 };
+
+export const confirmPasswordChange = async (token: string): Promise<boolean> => {
+    let pool;
+    try {
+      pool = await connectToDb();
+      const request = pool.request();
+      request.input('token', sql.NVarChar, token);
+      const result = await request.query(`
+        SELECT userId
+        FROM Users
+        WHERE resetPasswordToken = @token
+        AND resetPasswordExpires > GETDATE()
+      `);
+
+      if (result.recordset.length === 0) {
+        return false;
+      }
+
+      const userId = result.recordset[0].userId as number; // Явна типізація
+      const updateRequest = pool.request();
+      updateRequest.input('userId', sql.Int, userId);
+      await updateRequest.query(`
+        UPDATE Users
+        SET resetPasswordToken = NULL,
+            resetPasswordExpires = NULL
+        WHERE userId = @userId
+      `);
+
+      return true;
+    } catch (err) {
+      console.error('Error confirming password change:', err);
+      throw new Error('Failed to confirm password change');
+    } finally {
+      if (pool) pool.close(); 
+    }
+  };
