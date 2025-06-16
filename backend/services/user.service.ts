@@ -1,5 +1,4 @@
 // src/services/user.service.ts
-
 import { ConnectionPool, Transaction, Request as SqlRequest, TYPES } from 'mssql';
 import { dbConfig } from '../config/db';
 
