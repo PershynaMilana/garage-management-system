@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, changePassword, getUserById, updateUser, updateUserPhotoUrl, generatePasswordResetToken } from '../services/auth.service'; 
+import { registerUser, loginUser, changePassword, confirmPasswordChange, getUserById, updateUser, updateUserPhotoUrl, generatePasswordResetToken } from '../services/auth.service'; 
 import path from 'path';
 
 export const register = async (req: Request, res: Response) => {
@@ -46,14 +46,35 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const changePasswordHandler = async (req: Request, res: Response) => {
-    try {
-        const userId = (req as any).userId as number; 
-        const { oldPassword, newPassword } = req.body;
-        await changePassword(userId, oldPassword, newPassword);
-        res.json({ message: 'Password updated successfully' });
-    } catch (err: any) {
-        res.status(400).json({ error: err.message });
+  try {
+    const userId = (req as any).userId as number;
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: 'Old and new passwords are required' });
     }
+    await changePassword(userId, oldPassword, newPassword);
+    res.json({ message: 'Password changed successfully' });
+  } catch (err: any) {
+    res.status(400).json({ message: err.message || 'Failed to change password' });
+  }
+};
+
+export const confirmPasswordResetHandler = async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required.' });
+    }
+    const success = await confirmPasswordChange(token);
+    if (success) {
+      res.json({ message: 'Password reset successfully.' });
+    } else {
+      res.status(400).json({ error: 'Failed to reset password.' });
+    }
+  } catch (err: any) {
+    console.error('Confirm password reset error:', err);
+    res.status(400).json({ error: err.message || 'Помилка скидання пароля' });
+  }
 };
 
 export const getProfile = async (req: Request, res: Response) => {
