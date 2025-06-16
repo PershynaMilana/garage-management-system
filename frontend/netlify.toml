@@ -1,0 +1,31 @@
+[build]
+  # Команда для сборки проекта
+  command = "npm run build"
+  # Папка с собранными файлами
+  publish = "dist"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/*.mjs"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/assets/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/static/js/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+
+# Настройка для SPA (Single Page Application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
