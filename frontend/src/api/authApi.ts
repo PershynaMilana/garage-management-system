@@ -7,7 +7,7 @@ import {
     User
 } from '../types/auth';
 
-const API_BASE_URL = 'https://garage-management-system-backend-lwya.onrender.com';
+const API_BASE_URL = 'https://garage-management-system-backend-lwya.onrender.com/api';
 
 const logRequest = (method: string, url: string, data?: any) => {
     console.log(`API Request: ${method} ${url}`);

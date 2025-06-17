@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User, UserListResponse, UserQueryParams, UserRole } from '../types/user'; 
 
-const API_BASE_URL = 'https://garage-management-system-backend-lwya.onrender.com';
+const API_BASE_URL = 'https://garage-management-system-backend-lwya.onrender.com/api';
 
 export const userApi = {
     getAllUsers: async (params: UserQueryParams): Promise<UserListResponse> => {
